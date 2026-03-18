@@ -335,9 +335,12 @@ export default function LandingPage() {
           <p className="text-sm text-muted-foreground font-medium">
             Built for the one-person business. Ship great content, solo.
           </p>
-          <div className="flex gap-4 text-sm font-bold">
+          <div className="flex flex-wrap gap-4 text-sm font-bold">
             <Link href="/auth/login" className="hover:underline underline-offset-4">Log In</Link>
             <Link href="/auth/sign-up" className="hover:underline underline-offset-4">Sign Up</Link>
+            <Link href="/legal/privacy" className="hover:underline underline-offset-4 text-muted-foreground">Privacy</Link>
+            <Link href="/legal/terms" className="hover:underline underline-offset-4 text-muted-foreground">Terms</Link>
+            <Link href="/legal/cookies" className="hover:underline underline-offset-4 text-muted-foreground">Cookies</Link>
           </div>
         </div>
       </footer>

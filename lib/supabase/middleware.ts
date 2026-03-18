@@ -43,7 +43,7 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const authPaths = ['/auth/login', '/auth/sign-up', '/auth/sign-up-success', '/auth/error']
-  const protectedPaths = ['/dashboard', '/calendar', '/repurpose', '/ideas', '/studio']
+  const protectedPaths = ['/dashboard', '/calendar', '/repurpose', '/ideas', '/studio', '/settings']
 
   const isAuthPage = authPaths.some((p) => pathname.startsWith(p))
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p))

@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -32,9 +31,11 @@ import {
 } from "lucide-react"
 import SocialMediaCard from "@/components/social-media-card"
 import ContentCreator from "@/components/content-creator"
+import ContentAnalytics from "@/components/content-analytics"
 import StudioSelector from "@/components/studio-selector"
 import MobileNavigation from "@/components/mobile-navigation"
 import UserMenu from "@/components/user-menu"
+import OnboardingDialog from "@/components/onboarding-dialog"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { createClient } from "@/lib/supabase/client"
 import type { PlatformKey } from "@/lib/storage"
@@ -71,6 +72,8 @@ export default function Dashboard() {
   const [usernameInput, setUsernameInput] = useState("")
   const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [userId, setUserId] = useState("")
 
   // Load user + connected platforms from Supabase
   useEffect(() => {
@@ -79,6 +82,19 @@ export default function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
       setUserEmail(user.email ?? "")
+      setUserId(user.id)
+      // Check onboarding status
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarded, display_name")
+        .eq("id", user.id)
+        .single()
+      if (profile && !profile.onboarded) {
+        setShowOnboarding(true)
+      }
+      if (profile?.display_name) {
+        setUserEmail(profile.display_name)
+      }
       const { data } = await supabase
         .from("connected_platforms")
         .select("platform_key, username")
@@ -110,7 +126,7 @@ export default function Dashboard() {
         username: usernameInput.trim(),
       }, { onConflict: "user_id,platform_key" })
     if (error) {
-      toast({ title: "Error connecting", description: error.message, variant: "destructive" })
+      toast.error("Error connecting", { description: error.message })
       setConnecting(false)
       return
     }
@@ -118,7 +134,7 @@ export default function Dashboard() {
     setPlatforms(data ?? [])
     setConnecting(false)
     setConnected(true)
-    toast({ title: `${connectTarget.label} connected`, description: `${usernameInput.trim()} is now linked.` })
+    toast.success(`${connectTarget.label} connected`, { description: `${usernameInput.trim()} is now linked.` })
     setTimeout(() => setConnectDialogOpen(false), 1200)
   }, [connectTarget, usernameInput])
 
@@ -129,14 +145,18 @@ export default function Dashboard() {
     await supabase.from("connected_platforms").delete().eq("user_id", user.id).eq("platform_key", key)
     setPlatforms((prev) => prev.filter((p) => p.platform_key !== key))
     const def = PLATFORM_DEFS.find((p) => p.key === key)
-    toast({ title: `${def?.label ?? key} disconnected` })
+    toast.success(`${def?.label ?? key} disconnected`)
   }, [])
 
   const getConnected = (key: PlatformKey) => platforms.find((p) => p.platform_key === key)
 
   return (
     <div className="min-h-screen bg-background p-2 sm:p-4 md:p-8 font-sans">
-      <Toaster />
+      <OnboardingDialog
+        open={showOnboarding}
+        userId={userId}
+        onComplete={(name) => { setShowOnboarding(false); setUserEmail(name); toast.success(`Welcome, ${name}! Let's start creating.`) }}
+      />
       <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
 
         {/* Header */}
@@ -291,6 +311,11 @@ export default function Dashboard() {
                 ))}
               </Tabs>
             </section>
+
+            {/* Analytics */}
+            <div className="mb-10">
+              <ContentAnalytics />
+            </div>
 
             {/* Studio */}
             <section aria-labelledby="studio-heading">

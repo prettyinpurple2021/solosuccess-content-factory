@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Toaster } from "@/components/ui/toaster"
-import { toast } from "@/components/ui/use-toast"
-import { LayoutDashboard, CalendarDays, Repeat2, Lightbulb, Menu, Copy, Loader2, Wand2, Check } from "lucide-react"
+import { toast } from "sonner"
+import { LayoutDashboard, CalendarDays, Repeat2, Lightbulb, Menu, Copy, Loader2, Wand2, Check, Sparkles } from "lucide-react"
 import MobileNavigation from "@/components/mobile-navigation"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -114,33 +115,56 @@ export default function RepurposePage() {
   const [results, setResults] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [useAI, setUseAI] = useState(false)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
 
   const handleRepurpose = async () => {
     if (!input.trim()) {
-      toast({ title: "Paste your content first.", variant: "destructive" })
+      toast.error("Paste your content first.")
       return
     }
     setLoading(true)
-    // Stagger transforms to feel like processing
     const newResults: Record<string, string> = {}
-    for (const fmt of FORMATS) {
-      await new Promise((r) => setTimeout(r, 250))
-      newResults[fmt.id] = fmt.transform(input)
-      setResults({ ...newResults })
+
+    if (useAI) {
+      // Call AI API for each format in parallel
+      const promises = FORMATS.map(async (fmt) => {
+        setLoadingId(fmt.id)
+        try {
+          const res = await fetch("/api/ai-repurpose", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ formatId: fmt.id, input }),
+          })
+          const data = await res.json()
+          newResults[fmt.id] = data.text ?? fmt.transform(input)
+        } catch {
+          newResults[fmt.id] = fmt.transform(input)
+        }
+        setResults({ ...newResults })
+      })
+      await Promise.all(promises)
+    } else {
+      for (const fmt of FORMATS) {
+        await new Promise((r) => setTimeout(r, 250))
+        newResults[fmt.id] = fmt.transform(input)
+        setResults({ ...newResults })
+      }
     }
+
+    setLoadingId(null)
     setLoading(false)
   }
 
   const handleCopy = async (id: string, text: string) => {
     await navigator.clipboard.writeText(text)
     setCopiedId(id)
-    toast({ title: "Copied to clipboard" })
+    toast.success("Copied to clipboard")
     setTimeout(() => setCopiedId(null), 2000)
   }
 
   return (
     <div className="min-h-screen bg-background p-2 sm:p-4 md:p-8 font-sans">
-      <Toaster />
       <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
 
         {/* Header */}
@@ -207,18 +231,31 @@ export default function RepurposePage() {
                 placeholder="Paste a blog post, lesson, idea, insight, or any long-form content here..."
                 className="min-h-[160px] border-2 border-black rounded-xl p-4 text-base resize-none"
               />
-              <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center justify-between mt-3 flex-wrap gap-3">
                 <span className="text-xs font-medium text-muted-foreground">
                   {input.split(/\s+/).filter(Boolean).length} words
                 </span>
-                <Button
-                  onClick={handleRepurpose}
-                  disabled={loading || !input.trim()}
-                  className="bg-brand-gradient-metallic text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex gap-2 h-11 px-6"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                  {loading ? "Repurposing..." : "Repurpose Now"}
-                </Button>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="ai-toggle"
+                      checked={useAI}
+                      onCheckedChange={setUseAI}
+                    />
+                    <Label htmlFor="ai-toggle" className="font-bold text-sm flex items-center gap-1 cursor-pointer">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      AI Rewrite
+                    </Label>
+                  </div>
+                  <Button
+                    onClick={handleRepurpose}
+                    disabled={loading || !input.trim()}
+                    className="bg-brand-gradient-metallic text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex gap-2 h-11 px-6"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : useAI ? <Sparkles className="h-4 w-4" /> : <Wand2 className="h-4 w-4" />}
+                    {loading ? "Repurposing..." : useAI ? "Repurpose with AI" : "Repurpose Now"}
+                  </Button>
+                </div>
               </div>
             </Card>
 
@@ -227,7 +264,8 @@ export default function RepurposePage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 {FORMATS.map((fmt) => {
                   const text = results[fmt.id]
-                  if (!text) return null
+                  const isLoading = useAI && loading && !text
+                  if (!text && !isLoading) return null
                   return (
                     <Card key={fmt.id} className={`border-4 ${fmt.color} rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
                       <div className="flex items-start justify-between gap-2 mb-2">
@@ -246,7 +284,11 @@ export default function RepurposePage() {
                         </Button>
                       </div>
                       <pre className="text-xs font-mono bg-background border-2 border-black rounded-lg p-3 whitespace-pre-wrap max-h-52 overflow-auto leading-relaxed">
-                        {text}
+                        {isLoading ? (
+                          <span className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin" /> Rewriting with AI...
+                          </span>
+                        ) : text}
                       </pre>
                     </Card>
                   )
