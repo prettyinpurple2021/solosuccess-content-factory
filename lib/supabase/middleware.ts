@@ -41,19 +41,31 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const publicPaths = ['/auth/login', '/auth/sign-up', '/auth/sign-up-success', '/auth/error']
-  const isPublic = publicPaths.some((p) => request.nextUrl.pathname.startsWith(p))
+  const pathname = request.nextUrl.pathname
+  const authPaths = ['/auth/login', '/auth/sign-up', '/auth/sign-up-success', '/auth/error']
+  const protectedPaths = ['/dashboard', '/calendar', '/repurpose', '/ideas', '/studio']
 
-  if (!user && !isPublic) {
+  const isAuthPage = authPaths.some((p) => pathname.startsWith(p))
+  const isProtected = protectedPaths.some((p) => pathname.startsWith(p))
+
+  // Unauthenticated user hitting a protected route → send to login
+  if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and tries to visit auth pages, redirect to dashboard
-  if (user && isPublic) {
+  // Authenticated user hitting an auth page → send to dashboard
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // Authenticated user hitting the root landing page → send to dashboard
+  if (user && pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

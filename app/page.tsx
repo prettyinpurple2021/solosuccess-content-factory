@@ -1,365 +1,346 @@
-"use client"
-
-import { useState, useEffect, useCallback } from "react"
-import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
+import { ArrowRight, FileText, CalendarDays, Repeat2, Lightbulb, BarChart2, BookOpen, Video, Mail, MessageSquare, LayoutDashboard, ImageIcon, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
-import {
-  Instagram,
-  Linkedin,
-  Menu,
-  Plus,
-  Twitter,
-  Youtube,
-  LayoutDashboard,
-  CalendarDays,
-  Repeat2,
-  Lightbulb,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react"
-import SocialMediaCard from "@/components/social-media-card"
-import ContentCreator from "@/components/content-creator"
-import StudioSelector from "@/components/studio-selector"
-import MobileNavigation from "@/components/mobile-navigation"
-import UserMenu from "@/components/user-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { createClient } from "@/lib/supabase/client"
-import type { PlatformKey } from "@/lib/storage"
 
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
-  { label: "Content Calendar", href: "/calendar", icon: <CalendarDays className="h-5 w-5" /> },
-  { label: "Repurpose", href: "/repurpose", icon: <Repeat2 className="h-5 w-5" /> },
-  { label: "Ideas / Swipe File", href: "/ideas", icon: <Lightbulb className="h-5 w-5" /> },
+const FEATURES = [
+  {
+    icon: <FileText className="h-7 w-7" />,
+    title: "Post, Thread & Story Creator",
+    desc: "Write punchy social posts, multi-part threads, and stories optimised for every platform — all in one editor.",
+    color: "bg-[#FFD700]",
+  },
+  {
+    icon: <Mail className="h-7 w-7" />,
+    title: "Newsletter Studio",
+    desc: "Craft email newsletters from subject line to sign-off. Keep your list warm without leaving the factory.",
+    color: "bg-[#FFEC6E]",
+  },
+  {
+    icon: <Video className="h-7 w-7" />,
+    title: "Short-Form Video Scripts",
+    desc: "Script Reels, TikToks, and YouTube Shorts in minutes. No more staring at a blank page before hitting record.",
+    color: "bg-[#FF6B6B]",
+  },
+  {
+    icon: <BookOpen className="h-7 w-7" />,
+    title: "Blog Post Builder",
+    desc: "Title, meta description, cover image, body, and SEO tags — everything a published blog post needs, in one place.",
+    color: "bg-[#FF2D78]",
+  },
+  {
+    icon: <BarChart2 className="h-7 w-7" />,
+    title: "Surveys & Polls",
+    desc: "Ask your audience the right questions and validate your next offer before you build it.",
+    color: "bg-[#FFD700]",
+  },
+  {
+    icon: <Repeat2 className="h-7 w-7" />,
+    title: "One-Click Repurpose",
+    desc: "Paste any piece of content and instantly get 6 platform-ready reformats — post, thread, newsletter, script, and more.",
+    color: "bg-[#FFEC6E]",
+  },
+  {
+    icon: <CalendarDays className="h-7 w-7" />,
+    title: "Content Calendar",
+    desc: "Plan your entire month at a glance. Schedule content to any connected platform without juggling tabs.",
+    color: "bg-[#FF6B6B]",
+  },
+  {
+    icon: <Lightbulb className="h-7 w-7" />,
+    title: "Ideas / Swipe File",
+    desc: "Capture inspiration the moment it strikes. Tag, pin, and search your entire swipe file in seconds.",
+    color: "bg-[#FF2D78]",
+  },
 ]
 
-const PLATFORM_DEFS: {
-  key: PlatformKey
-  label: string
-  color: string
-  icon: React.ReactNode
-  placeholder: string
-}[] = [
-  { key: "instagram", label: "Instagram", color: "bg-gradient-to-br from-yellow-400 to-pink-500", icon: <Instagram className="h-6 w-6" />, placeholder: "@yourbrand" },
-  { key: "twitter", label: "Twitter / X", color: "bg-gradient-to-br from-pink-400 to-rose-600", icon: <Twitter className="h-6 w-6" />, placeholder: "@yourbrand" },
-  { key: "linkedin", label: "LinkedIn", color: "bg-gradient-to-br from-yellow-500 to-orange-500", icon: <Linkedin className="h-6 w-6" />, placeholder: "Your Name / Company" },
-  { key: "youtube", label: "YouTube", color: "bg-gradient-to-br from-red-500 to-rose-700", icon: <Youtube className="h-6 w-6" />, placeholder: "@yourchannel" },
+const STATS = [
+  { value: "7", label: "Content formats in one tool" },
+  { value: "4", label: "Platforms, one dashboard" },
+  { value: "1-click", label: "Repurpose any content" },
+  { value: "100%", label: "Built for solopreneurs" },
 ]
 
-type ConnectedRow = { platform_key: string; username: string }
+const CONTENT_TYPES = [
+  "Social Post", "Thread", "Newsletter", "Short Video", "Story", "Survey", "Blog Post",
+]
 
-export default function Dashboard() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [userEmail, setUserEmail] = useState<string>("")
-  const [platforms, setPlatforms] = useState<ConnectedRow[]>([])
-  const [connectDialogOpen, setConnectDialogOpen] = useState(false)
-  const [connectTarget, setConnectTarget] = useState<(typeof PLATFORM_DEFS)[0] | null>(null)
-  const [usernameInput, setUsernameInput] = useState("")
-  const [connecting, setConnecting] = useState(false)
-  const [connected, setConnected] = useState(false)
+const TESTIMONIALS = [
+  {
+    quote: "I used to jump between 6 different tools. Now everything lives in one place. My content output doubled in the first week.",
+    name: "Jordan M.",
+    role: "Indie SaaS Founder",
+  },
+  {
+    quote: "The repurpose feature alone is worth it. I write one LinkedIn post and get a full week of content across every platform.",
+    name: "Priya S.",
+    role: "Solo Business Coach",
+  },
+  {
+    quote: "As a one-person brand, I needed something that just worked. This is the content OS I didn't know I needed.",
+    name: "Alex T.",
+    role: "Creator & Consultant",
+  },
+]
 
-  // Load user + connected platforms from Supabase
-  useEffect(() => {
-    const load = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth/login'); return }
-      setUserEmail(user.email ?? "")
-      const { data } = await supabase
-        .from("connected_platforms")
-        .select("platform_key, username")
-        .eq("user_id", user.id)
-      setPlatforms(data ?? [])
-    }
-    load()
-  }, [router])
-
-  const openConnectDialog = useCallback((def: (typeof PLATFORM_DEFS)[0]) => {
-    setConnectTarget(def)
-    setUsernameInput("")
-    setConnected(false)
-    setConnectDialogOpen(true)
-  }, [])
-
-  const handleConnect = useCallback(async () => {
-    if (!connectTarget || !usernameInput.trim()) return
-    setConnecting(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    await new Promise((r) => setTimeout(r, 800))
-    const { error } = await supabase
-      .from("connected_platforms")
-      .upsert({
-        user_id: user.id,
-        platform_key: connectTarget.key,
-        username: usernameInput.trim(),
-      }, { onConflict: "user_id,platform_key" })
-    if (error) {
-      toast({ title: "Error connecting", description: error.message, variant: "destructive" })
-      setConnecting(false)
-      return
-    }
-    const { data } = await supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id)
-    setPlatforms(data ?? [])
-    setConnecting(false)
-    setConnected(true)
-    toast({ title: `${connectTarget.label} connected`, description: `${usernameInput.trim()} is now linked.` })
-    setTimeout(() => setConnectDialogOpen(false), 1200)
-  }, [connectTarget, usernameInput])
-
-  const handleDisconnect = useCallback(async (key: PlatformKey) => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    await supabase.from("connected_platforms").delete().eq("user_id", user.id).eq("platform_key", key)
-    setPlatforms((prev) => prev.filter((p) => p.platform_key !== key))
-    const def = PLATFORM_DEFS.find((p) => p.key === key)
-    toast({ title: `${def?.label ?? key} disconnected` })
-  }, [])
-
-  const getConnected = (key: PlatformKey) => platforms.find((p) => p.platform_key === key)
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background p-2 sm:p-4 md:p-8 font-sans">
-      <Toaster />
-      <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+    <div className="min-h-screen bg-background font-sans">
 
-        {/* Header */}
-        <header className="border-b-4 border-black p-4 sm:p-6 bg-card">
-          <div className="flex justify-between items-center gap-4">
-            <div className="flex flex-col leading-none">
-              <span className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">SOLO SUCCESS</span>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-brand-gradient">CONTENT FACTORY</h1>
+      {/* ─── Navbar ─── */}
+      <header className="sticky top-0 z-50 bg-card border-b-4 border-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex flex-col leading-none select-none">
+            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+            <span className="text-lg font-black text-brand-gradient tracking-tight leading-none">CONTENT FACTORY</span>
+          </div>
+          <nav className="hidden md:flex items-center gap-6" aria-label="Site navigation">
+            {["Features", "How It Works", "Pricing"].map((label) => (
+              <a key={label} href={`#${label.toLowerCase().replace(/\s/g, "-")}`} className="font-bold text-sm hover:underline underline-offset-4">
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hidden sm:inline-flex" asChild>
+              <Link href="/auth/login">Log In</Link>
+            </Button>
+            <Button className="bg-black text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(255,45,120,1)] hover:shadow-[2px_2px_0px_0px_rgba(255,45,120,1)] hover:translate-y-0.5 transition-all" asChild>
+              <Link href="/auth/sign-up">Start Free <ArrowRight className="h-4 w-4 ml-1" /></Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* ─── Hero ─── */}
+      <section className="relative overflow-hidden border-b-4 border-black bg-card">
+        {/* Decorative grid bg */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "repeating-linear-gradient(0deg,#000 0,#000 1px,transparent 0,transparent 40px),repeating-linear-gradient(90deg,#000 0,#000 1px,transparent 0,transparent 40px)" }} aria-hidden="true" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36">
+          <div className="max-w-4xl">
+            {/* Tag */}
+            <div className="inline-flex items-center gap-2 bg-[#FFD700] border-2 border-black rounded-full px-4 py-1.5 mb-8 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="text-xs font-black tracking-widest uppercase">The solo founder's content OS</span>
             </div>
 
-            {/* Mobile menu */}
-            <div className="flex md:hidden gap-2 items-center">
-              {userEmail && <UserMenu email={userEmail} />}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="border-r-4 border-black p-0 w-72">
-                  <MobileNavigation />
-                </SheetContent>
-              </Sheet>
-            </div>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] text-balance mb-8">
+              CREATE.{" "}
+              <span className="text-brand-gradient">PUBLISH.</span>
+              <br />
+              GROW — SOLO.
+            </h1>
 
-            {/* Desktop actions */}
-            <div className="hidden md:flex items-center gap-3">
+            <p className="text-lg sm:text-xl md:text-2xl font-medium text-muted-foreground max-w-2xl leading-relaxed mb-10 text-balance">
+              SoloSuccess Content Factory is the all-in-one content workspace built for one-person businesses. Write, schedule, repurpose, and publish — without a team.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
               <Button
-                className="bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                onClick={() => openConnectDialog(PLATFORM_DEFS[0])}
+                size="lg"
+                className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-lg h-14 px-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all"
+                asChild
               >
-                Connect Account
+                <Link href="/auth/sign-up">Start for Free <ArrowRight className="h-5 w-5 ml-2" /></Link>
               </Button>
-              {userEmail && <UserMenu email={userEmail} />}
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-4 border-black rounded-2xl font-black text-lg h-14 px-8 bg-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all"
+                asChild
+              >
+                <Link href="/auth/login">Log In</Link>
+              </Button>
             </div>
           </div>
-        </header>
 
-        <div className="grid md:grid-cols-[260px_1fr] h-[calc(100vh-6rem)]">
-
-          {/* Sidebar */}
-          <aside className="hidden md:flex flex-col border-r-4 border-black bg-secondary p-4 gap-8">
-            <nav className="space-y-1" aria-label="Main navigation">
-              {NAV_ITEMS.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`flex items-center gap-3 text-base font-bold p-3 rounded-xl transition-colors ${
-                      isActive
-                        ? "bg-brand-gradient-metallic text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black"
-                        : "hover:bg-black/5 text-foreground"
-                    }`}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </Link>
-                )
-              })}
-            </nav>
-
-            <div>
-              <h2 className="text-sm font-black tracking-widest uppercase text-muted-foreground mb-3">Platforms</h2>
-              <div className="space-y-2">
-                {PLATFORM_DEFS.map((p) => {
-                  const conn = getConnected(p.key)
-                  return (
-                    <Button
-                      key={p.key}
-                      variant="outline"
-                      onClick={() => !conn && openConnectDialog(p)}
-                      className={`w-full justify-start gap-2 rounded-xl border-2 border-black font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${conn ? "opacity-100" : "opacity-60"}`}
-                    >
-                      {p.icon}
-                      <span className="flex-1 text-left">{conn ? conn.username : p.label}</span>
-                      {conn && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
-                    </Button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="mt-auto border-2 border-black rounded-xl p-3 bg-card">
-              <p className="text-xs font-bold text-muted-foreground leading-relaxed text-balance">
-                Built for solo founders who create, publish, and grow — all on their own.
-              </p>
-            </div>
-          </aside>
-
-          {/* Main */}
-          <main className="overflow-auto p-4 sm:p-6">
-
-            {/* Connected accounts */}
-            <section className="mb-8" aria-labelledby="accounts-heading">
-              <h2 id="accounts-heading" className="text-xl sm:text-2xl font-black mb-4 tracking-tight">CONNECTED ACCOUNTS</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {PLATFORM_DEFS.map((def) => {
-                  const conn = getConnected(def.key)
-                  return (
-                    <SocialMediaCard
-                      key={def.key}
-                      platform={def.label}
-                      platformKey={def.key}
-                      username={conn?.username ?? ""}
-                      icon={def.icon}
-                      color={def.color}
-                      connected={!!conn}
-                      onConnect={() => openConnectDialog(def)}
-                      onDisconnect={() => handleDisconnect(def.key)}
-                    />
-                  )
-                })}
-                <button
-                  onClick={() => { setConnectTarget(null); setConnectDialogOpen(true) }}
-                  className="h-full min-h-[140px] border-4 border-dashed border-black rounded-xl flex flex-col items-center justify-center gap-2 bg-secondary hover:bg-muted text-foreground font-bold transition-colors"
-                >
-                  <Plus className="h-8 w-8" />
-                  <span className="font-bold">Add Platform</span>
-                </button>
-              </div>
-            </section>
-
-            {/* Create content */}
-            <section className="mb-10" aria-labelledby="create-heading">
-              <h2 id="create-heading" className="text-xl sm:text-2xl font-black mb-4 tracking-tight">CREATE CONTENT</h2>
-              <Tabs defaultValue="post" className="w-full">
-                <TabsList className="w-full bg-secondary border-2 border-black rounded-xl p-1 mb-4 flex flex-wrap gap-1 h-auto">
-                  {[
-                    { value: "post", label: "Post" },
-                    { value: "thread", label: "Thread" },
-                    { value: "newsletter", label: "Newsletter" },
-                    { value: "video", label: "Short Video" },
-                    { value: "story", label: "Story" },
-                    { value: "survey", label: "Survey" },
-                    { value: "blog", label: "Blog" },
-                  ].map((tab) => (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className="rounded-lg data-[state=active]:bg-brand-gradient-metallic data-[state=active]:text-white data-[state=active]:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] data-[state=active]:border-2 data-[state=active]:border-black font-bold flex-1 min-w-fit"
-                    >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                {["post", "thread", "newsletter", "video", "story", "survey", "blog"].map((t) => (
-                  <TabsContent key={t} value={t}>
-                    <ContentCreator type={t as Parameters<typeof ContentCreator>[0]["type"]} />
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </section>
-
-            {/* Studio */}
-            <section aria-labelledby="studio-heading">
-              <h2 id="studio-heading" className="text-xl sm:text-2xl font-black mb-4 tracking-tight">CONTENT STUDIO</h2>
-              <StudioSelector />
-            </section>
-          </main>
+          {/* Content type badges */}
+          <div className="flex flex-wrap gap-3 mt-14" aria-label="Supported content types">
+            {CONTENT_TYPES.map((type, i) => (
+              <span
+                key={type}
+                className="border-2 border-black rounded-xl px-4 py-2 text-sm font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                style={{ background: i % 2 === 0 ? "#FFD700" : "#fff" }}
+              >
+                {type}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Connect Account Dialog */}
-      <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
-        <DialogContent className="border-4 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black">
-              {connectTarget ? `Connect ${connectTarget.label}` : "Connect a Platform"}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium">
-              Enter your handle or page name. SoloSuccess Content Factory will link it for scheduling and publishing.
-            </DialogDescription>
-          </DialogHeader>
+      {/* ─── Stats bar ─── */}
+      <section className="bg-black text-white border-b-4 border-black" aria-label="Key statistics">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x-2 divide-white/10">
+            {STATS.map((s) => (
+              <div key={s.label} className="py-8 px-6 text-center">
+                <p className="text-3xl sm:text-4xl font-black text-brand-gradient">{s.value}</p>
+                <p className="text-sm font-medium text-white/60 mt-1 text-balance">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          {!connectTarget ? (
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              {PLATFORM_DEFS.map((def) => (
-                <button
-                  key={def.key}
-                  onClick={() => setConnectTarget(def)}
-                  className={`rounded-xl border-4 border-black p-4 flex flex-col items-center gap-2 font-bold text-sm text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${def.color}`}
-                >
-                  {def.icon}
-                  {def.label}
-                </button>
+      {/* ─── Features ─── */}
+      <section id="features" className="py-20 md:py-28 border-b-4 border-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="mb-14">
+            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Everything you need</span>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2 text-balance">
+              YOUR ENTIRE CONTENT OPERATION,<br className="hidden md:block" />{" "}
+              <span className="text-brand-gradient">IN ONE FACTORY.</span>
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className="border-4 border-black rounded-2xl p-6 bg-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all"
+              >
+                <div className={`w-12 h-12 ${f.color} border-2 border-black rounded-xl flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]`}>
+                  {f.icon}
+                </div>
+                <h3 className="font-black text-lg leading-snug">{f.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed flex-1">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── How It Works ─── */}
+      <section id="how-it-works" className="py-20 md:py-28 border-b-4 border-black bg-secondary">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="mb-14">
+            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Simple by design</span>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2 text-balance">HOW IT WORKS</h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { step: "01", title: "Create Your Account", desc: "Sign up in seconds. No credit card required. Your workspace is ready immediately.", color: "bg-[#FFD700]" },
+              { step: "02", title: "Connect Your Platforms", desc: "Link Instagram, Twitter, LinkedIn, and YouTube. All your channels, one command centre.", color: "bg-[#FF6B6B]" },
+              { step: "03", title: "Create, Repurpose & Publish", desc: "Write content once, repurpose it everywhere, and schedule posts without leaving the app.", color: "bg-[#FF2D78]" },
+            ].map((s) => (
+              <div key={s.step} className="border-4 border-black rounded-2xl bg-card p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+                <span className={`text-5xl font-black ${s.color.replace("bg-", "text-[")}]`} style={{ color: s.color === "bg-[#FFD700]" ? "#FFD700" : s.color === "bg-[#FF6B6B]" ? "#FF6B6B" : "#FF2D78" }}>
+                  {s.step}
+                </span>
+                <h3 className="text-2xl font-black">{s.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Testimonials ─── */}
+      <section className="py-20 md:py-28 border-b-4 border-black bg-card">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="mb-14">
+            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Social proof</span>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2">SOLO FOUNDERS LOVE IT</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="border-4 border-black rounded-2xl p-8 bg-secondary shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6">
+                <p className="text-lg font-medium leading-relaxed flex-1">{`"${t.quote}"`}</p>
+                <div className="flex items-center gap-3 border-t-2 border-black pt-4">
+                  <div className="w-10 h-10 bg-brand-gradient-metallic rounded-full border-2 border-black flex items-center justify-center text-white font-black text-sm">
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <p className="font-black text-sm">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Pricing ─── */}
+      <section id="pricing" className="py-20 md:py-28 border-b-4 border-black bg-secondary">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="mb-14 text-center">
+            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Simple pricing</span>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2">ONE PLAN. EVERYTHING INCLUDED.</h2>
+            <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">No feature gating. No seat limits. Everything a solo founder needs from day one.</p>
+          </div>
+
+          <div className="max-w-lg mx-auto border-4 border-black rounded-3xl bg-card shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+            <div className="bg-brand-gradient-metallic p-8">
+              <p className="text-white font-black text-sm tracking-widest uppercase">Solo Plan</p>
+              <p className="text-white text-6xl font-black mt-2">Free</p>
+              <p className="text-white/80 mt-1 font-medium">during early access</p>
+            </div>
+            <div className="p-8 space-y-4">
+              {[
+                "All 7 content types",
+                "Content Calendar",
+                "Repurpose Engine",
+                "Ideas / Swipe File",
+                "4 platform connections",
+                "Draft autosave",
+                "Full account + data sync",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span className="font-bold">{item}</span>
+                </div>
               ))}
+
+              <Button
+                size="lg"
+                className="w-full mt-4 bg-black text-white border-4 border-black rounded-2xl font-black text-lg h-14 shadow-[6px_6px_0px_0px_rgba(255,45,120,1)] hover:shadow-[3px_3px_0px_0px_rgba(255,45,120,1)] hover:translate-y-1 transition-all"
+                asChild
+              >
+                <Link href="/auth/sign-up">Get Started Free <ArrowRight className="h-5 w-5 ml-2" /></Link>
+              </Button>
             </div>
-          ) : connected ? (
-            <div className="flex flex-col items-center gap-3 py-4">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
-              <p className="font-black text-lg">Connected!</p>
-              <p className="text-muted-foreground text-sm">{usernameInput} is now linked.</p>
-            </div>
-          ) : (
-            <div className="space-y-4 pt-2">
-              <div>
-                <Label className="font-bold mb-2 block">Your {connectTarget.label} handle / username</Label>
-                <Input
-                  placeholder={connectTarget.placeholder}
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleConnect() }}
-                  className="border-2 border-black rounded-xl h-11"
-                  autoFocus
-                />
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 border-2 border-black rounded-xl font-bold" onClick={() => setConnectTarget(null)}>Back</Button>
-                <Button
-                  onClick={handleConnect}
-                  disabled={!usernameInput.trim() || connecting}
-                  className="flex-1 bg-black hover:bg-black/80 text-white border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex gap-2"
-                >
-                  {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {connecting ? "Connecting..." : `Connect ${connectTarget.label}`}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Final CTA ─── */}
+      <section className="py-20 md:py-28 bg-black text-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-brand-gradient text-balance mb-6">
+            STOP JUGGLING TOOLS. START SHIPPING CONTENT.
+          </h2>
+          <p className="text-white/60 text-xl max-w-xl mx-auto mb-10 leading-relaxed">
+            Join solo founders who build their audience with SoloSuccess Content Factory.
+          </p>
+          <Button
+            size="lg"
+            className="bg-brand-gradient-metallic text-white border-4 border-white rounded-2xl font-black text-xl h-16 px-12 shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-1 transition-all"
+            asChild
+          >
+            <Link href="/auth/sign-up">Create Your Free Account <ArrowRight className="h-6 w-6 ml-2" /></Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* ─── Footer ─── */}
+      <footer className="border-t-4 border-black bg-card py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col leading-none">
+            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+            <span className="text-lg font-black text-brand-gradient">CONTENT FACTORY</span>
+          </div>
+          <p className="text-sm text-muted-foreground font-medium">
+            Built for the one-person business. Ship great content, solo.
+          </p>
+          <div className="flex gap-4 text-sm font-bold">
+            <Link href="/auth/login" className="hover:underline underline-offset-4">Log In</Link>
+            <Link href="/auth/sign-up" className="hover:underline underline-offset-4">Sign Up</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
