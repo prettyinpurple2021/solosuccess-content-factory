@@ -8,7 +8,7 @@ import { useEffect, useState } from "react"
 import { getConnectedPlatforms, type ConnectedPlatform } from "@/lib/storage"
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
+  { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
   { label: "Content Calendar", href: "/calendar", icon: <CalendarDays className="h-5 w-5" /> },
   { label: "Repurpose", href: "/repurpose", icon: <Repeat2 className="h-5 w-5" /> },
   { label: "Ideas / Swipe File", href: "/ideas", icon: <Lightbulb className="h-5 w-5" /> },
