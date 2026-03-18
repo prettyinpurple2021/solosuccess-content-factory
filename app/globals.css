@@ -7,12 +7,23 @@
     text-wrap: balance;
   }
 
-  /* Yellow → Pink metallic gradient utility */
-  .bg-brand-gradient {
-    background: linear-gradient(135deg, #FFD700 0%, #FF6B6B 50%, #FF2D78 100%);
+  /* Yellow → Pink metallic gradient for text */
+  .text-brand-gradient {
+    background: linear-gradient(
+      135deg,
+      #FFD700 0%,
+      #FFEC6E 18%,
+      #FF6B6B 48%,
+      #FF2D78 75%,
+      #C41E6A 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
 
-  /* Metallic sheen overlay — apply as a pseudo-element wrapper or use inline */
+  /* Background gradient with metallic sheen for buttons/elements */
   .bg-brand-gradient-metallic {
     background: linear-gradient(
       135deg,
@@ -38,6 +49,16 @@
       transparent 70%
     );
     pointer-events: none;
+  }
+
+  /* Ensure text is visible on gradient backgrounds */
+  .bg-brand-gradient-metallic {
+    color: white;
+  }
+
+  .bg-brand-gradient-metallic button,
+  .bg-brand-gradient-metallic a {
+    color: white;
   }
 }
 

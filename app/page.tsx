@@ -40,7 +40,7 @@ export default function Dashboard() {
               <span className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">
                 SOLO SUCCESS
               </span>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight bg-brand-gradient-metallic bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-brand-gradient">
                 CONTENT FACTORY
               </h1>
             </div>
