@@ -188,6 +188,8 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
           />
         </Card>
 
+        <DraftHistory contentType={type} onRestore={(draft) => { setBody(draft.body); toast.success("Draft restored") }} />
+
         <Button onClick={handlePublish}
           className="w-full h-14 bg-brand-gradient-metallic text-white rounded-xl border-2 border-black font-bold text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2">
           <Send className="h-5 w-5" />
