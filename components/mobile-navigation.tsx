@@ -1,15 +1,34 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Instagram, Linkedin, Twitter, Youtube, LayoutDashboard, CalendarDays, Repeat2, Lightbulb } from "lucide-react"
+"use client"
 
-const navItems = [
-  { label: "Dashboard", href: "#", icon: <LayoutDashboard className="h-5 w-5" />, active: true },
-  { label: "Content Calendar", href: "#", icon: <CalendarDays className="h-5 w-5" /> },
-  { label: "Repurpose", href: "#", icon: <Repeat2 className="h-5 w-5" /> },
-  { label: "Ideas / Swipe File", href: "#", icon: <Lightbulb className="h-5 w-5" /> },
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Instagram, Linkedin, Twitter, Youtube, LayoutDashboard, CalendarDays, Repeat2, Lightbulb, CheckCircle2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { getConnectedPlatforms, type ConnectedPlatform } from "@/lib/storage"
+
+const NAV_ITEMS = [
+  { label: "Dashboard", href: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
+  { label: "Content Calendar", href: "/calendar", icon: <CalendarDays className="h-5 w-5" /> },
+  { label: "Repurpose", href: "/repurpose", icon: <Repeat2 className="h-5 w-5" /> },
+  { label: "Ideas / Swipe File", href: "/ideas", icon: <Lightbulb className="h-5 w-5" /> },
+]
+
+const PLATFORM_DISPLAY = [
+  { key: "instagram" as const, icon: <Instagram className="h-4 w-4" />, label: "Instagram" },
+  { key: "twitter" as const, icon: <Twitter className="h-4 w-4" />, label: "Twitter / X" },
+  { key: "linkedin" as const, icon: <Linkedin className="h-4 w-4" />, label: "LinkedIn" },
+  { key: "youtube" as const, icon: <Youtube className="h-4 w-4" />, label: "YouTube" },
 ]
 
 export default function MobileNavigation() {
+  const pathname = usePathname()
+  const [platforms, setPlatforms] = useState<ConnectedPlatform[]>([])
+
+  useEffect(() => {
+    setPlatforms(getConnectedPlatforms())
+  }, [])
+
   return (
     <div className="h-full bg-card flex flex-col">
       {/* Brand header */}
@@ -17,7 +36,7 @@ export default function MobileNavigation() {
         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-muted-foreground block">
           SOLO SUCCESS
         </span>
-        <h2 className="text-2xl font-black bg-brand-gradient-metallic bg-clip-text text-transparent leading-tight">
+        <h2 className="text-2xl font-black text-brand-gradient leading-tight">
           CONTENT FACTORY
         </h2>
       </div>
@@ -25,57 +44,54 @@ export default function MobileNavigation() {
       <div className="flex-1 overflow-auto p-4">
         {/* Nav links */}
         <nav className="space-y-1 mb-8" aria-label="Mobile navigation">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 text-base font-bold p-3 rounded-xl transition-colors ${
-                item.active
-                  ? "bg-brand-gradient-metallic text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black"
-                  : "hover:bg-black/8 text-foreground"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center gap-3 text-base font-bold p-3 rounded-xl transition-colors ${
+                  isActive
+                    ? "bg-brand-gradient-metallic text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black"
+                    : "hover:bg-black/5 text-foreground"
+                }`}
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Platforms */}
         <div>
           <h3 className="text-xs font-black tracking-widest uppercase text-muted-foreground mb-3">Platforms</h3>
           <div className="space-y-2">
-            {[
-              { icon: <Instagram className="h-4 w-4" />, label: "Instagram" },
-              { icon: <Twitter className="h-4 w-4" />, label: "Twitter / X" },
-              { icon: <Linkedin className="h-4 w-4" />, label: "LinkedIn" },
-              { icon: <Youtube className="h-4 w-4" />, label: "YouTube" },
-            ].map((p) => (
-              <Button
-                key={p.label}
-                variant="outline"
-                className="w-full justify-start gap-2 rounded-xl border-2 border-black font-bold text-sm"
-              >
-                {p.icon} {p.label}
-              </Button>
-            ))}
+            {PLATFORM_DISPLAY.map((p) => {
+              const conn = platforms.find((c) => c.key === p.key)
+              return (
+                <Button
+                  key={p.key}
+                  variant="outline"
+                  className="w-full justify-start gap-2 rounded-xl border-2 border-black font-bold text-sm"
+                  asChild
+                >
+                  <Link href="/">
+                    {p.icon}
+                    <span className="flex-1 text-left">{conn ? conn.username : p.label}</span>
+                    {conn && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
+                  </Link>
+                </Button>
+              )
+            })}
           </div>
         </div>
       </div>
 
-      {/* Footer actions */}
       <div className="p-4 border-t-4 border-black">
-        <div className="grid grid-cols-2 gap-2">
-          <Button className="bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-            Connect
-          </Button>
-          <Button
-            variant="outline"
-            className="rounded-xl border-2 border-black font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-          >
-            Settings
-          </Button>
-        </div>
+        <Button className="w-full bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" asChild>
+          <Link href="/">Connect Account</Link>
+        </Button>
       </div>
     </div>
   )

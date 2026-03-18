@@ -1,6 +1,21 @@
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import {
   Instagram,
   Linkedin,
@@ -12,30 +27,126 @@ import {
   CalendarDays,
   Repeat2,
   Lightbulb,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react"
 import SocialMediaCard from "@/components/social-media-card"
 import ContentCreator from "@/components/content-creator"
 import StudioSelector from "@/components/studio-selector"
 import MobileNavigation from "@/components/mobile-navigation"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import {
+  getConnectedPlatforms,
+  connectPlatform,
+  disconnectPlatform,
+  type PlatformKey,
+  type ConnectedPlatform,
+} from "@/lib/storage"
 
-const navItems = [
-  { label: "Dashboard", href: "#", icon: <LayoutDashboard className="h-5 w-5" />, active: true },
-  { label: "Content Calendar", href: "#", icon: <CalendarDays className="h-5 w-5" /> },
-  { label: "Repurpose", href: "#", icon: <Repeat2 className="h-5 w-5" /> },
-  { label: "Ideas / Swipe File", href: "#", icon: <Lightbulb className="h-5 w-5" /> },
+const NAV_ITEMS = [
+  { label: "Dashboard", href: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
+  { label: "Content Calendar", href: "/calendar", icon: <CalendarDays className="h-5 w-5" /> },
+  { label: "Repurpose", href: "/repurpose", icon: <Repeat2 className="h-5 w-5" /> },
+  { label: "Ideas / Swipe File", href: "/ideas", icon: <Lightbulb className="h-5 w-5" /> },
+]
+
+const PLATFORM_DEFS: {
+  key: PlatformKey
+  label: string
+  color: string
+  icon: React.ReactNode
+  placeholder: string
+}[] = [
+  {
+    key: "instagram",
+    label: "Instagram",
+    color: "bg-gradient-to-br from-yellow-400 to-pink-500",
+    icon: <Instagram className="h-6 w-6" />,
+    placeholder: "@yourbrand",
+  },
+  {
+    key: "twitter",
+    label: "Twitter / X",
+    color: "bg-gradient-to-br from-pink-400 to-rose-600",
+    icon: <Twitter className="h-6 w-6" />,
+    placeholder: "@yourbrand",
+  },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    color: "bg-gradient-to-br from-yellow-500 to-orange-500",
+    icon: <Linkedin className="h-6 w-6" />,
+    placeholder: "Your Name / Company",
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    color: "bg-gradient-to-br from-red-500 to-rose-700",
+    icon: <Youtube className="h-6 w-6" />,
+    placeholder: "@yourchannel",
+  },
 ]
 
 export default function Dashboard() {
+  const pathname = usePathname()
+  const [platforms, setPlatforms] = useState<ConnectedPlatform[]>([])
+  const [connectDialogOpen, setConnectDialogOpen] = useState(false)
+  const [connectTarget, setConnectTarget] = useState<(typeof PLATFORM_DEFS)[0] | null>(null)
+  const [usernameInput, setUsernameInput] = useState("")
+  const [connecting, setConnecting] = useState(false)
+  const [connected, setConnected] = useState(false)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    setPlatforms(getConnectedPlatforms())
+  }, [])
+
+  const openConnectDialog = useCallback((def: (typeof PLATFORM_DEFS)[0]) => {
+    setConnectTarget(def)
+    setUsernameInput("")
+    setConnected(false)
+    setConnectDialogOpen(true)
+  }, [])
+
+  const handleConnect = useCallback(async () => {
+    if (!connectTarget || !usernameInput.trim()) return
+    setConnecting(true)
+    // Simulate OAuth handshake delay
+    await new Promise((r) => setTimeout(r, 1400))
+    const newPlatform: ConnectedPlatform = {
+      key: connectTarget.key,
+      username: usernameInput.trim(),
+      connectedAt: new Date().toISOString(),
+    }
+    connectPlatform(newPlatform)
+    setPlatforms(getConnectedPlatforms())
+    setConnecting(false)
+    setConnected(true)
+    toast({
+      title: `${connectTarget.label} connected`,
+      description: `${usernameInput.trim()} is now linked to SoloSuccess Content Factory.`,
+    })
+    setTimeout(() => setConnectDialogOpen(false), 1200)
+  }, [connectTarget, usernameInput])
+
+  const handleDisconnect = useCallback((key: PlatformKey) => {
+    disconnectPlatform(key)
+    setPlatforms(getConnectedPlatforms())
+    const def = PLATFORM_DEFS.find((p) => p.key === key)
+    toast({ title: `${def?.label ?? key} disconnected` })
+  }, [])
+
+  const getConnectedData = (key: PlatformKey) =>
+    platforms.find((p) => p.key === key)
+
   return (
     <div className="min-h-screen bg-background p-2 sm:p-4 md:p-8 font-sans">
-      {/* Main container — neobrutalist card */}
+      <Toaster />
       <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
 
         {/* Header */}
         <header className="border-b-4 border-black p-4 sm:p-6 bg-card">
           <div className="flex justify-between items-center gap-4">
-            {/* Brand wordmark with metallic gradient */}
             <div className="flex flex-col leading-none">
               <span className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">
                 SOLO SUCCESS
@@ -45,7 +156,7 @@ export default function Dashboard() {
               </h1>
             </div>
 
-            {/* Mobile menu trigger */}
+            {/* Mobile menu */}
             <div className="flex md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
@@ -55,6 +166,7 @@ export default function Dashboard() {
                     className="rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                   >
                     <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open menu</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="border-r-4 border-black p-0 w-72">
@@ -63,16 +175,20 @@ export default function Dashboard() {
               </Sheet>
             </div>
 
-            {/* Desktop header actions */}
+            {/* Desktop actions */}
             <div className="hidden sm:flex items-center gap-3">
-              <Button className="bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <Button
+                className="bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                onClick={() => openConnectDialog(PLATFORM_DEFS[0])}
+              >
                 Connect Account
               </Button>
               <Button
                 variant="outline"
                 className="rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                asChild
               >
-                Settings
+                <Link href="/ideas">Ideas</Link>
               </Button>
             </div>
           </div>
@@ -80,46 +196,53 @@ export default function Dashboard() {
 
         <div className="grid md:grid-cols-[260px_1fr] h-[calc(100vh-6rem)]">
 
-          {/* Sidebar — desktop only */}
+          {/* Sidebar */}
           <aside className="hidden md:flex flex-col border-r-4 border-black bg-secondary p-4 gap-8">
             <nav className="space-y-1" aria-label="Main navigation">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`flex items-center gap-3 text-base font-bold p-3 rounded-xl transition-colors ${
-                    item.active
-                      ? "bg-brand-gradient-metallic text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black"
-                      : "hover:bg-black/8 text-foreground"
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              ))}
+              {NAV_ITEMS.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`flex items-center gap-3 text-base font-bold p-3 rounded-xl transition-colors ${
+                      isActive
+                        ? "bg-brand-gradient-metallic text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black"
+                        : "hover:bg-black/5 text-foreground"
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                )
+              })}
             </nav>
 
             <div>
-              <h2 className="text-sm font-black tracking-widest uppercase text-muted-foreground mb-3">Platforms</h2>
+              <h2 className="text-sm font-black tracking-widest uppercase text-muted-foreground mb-3">
+                Platforms
+              </h2>
               <div className="space-y-2">
-                {[
-                  { icon: <Instagram className="h-4 w-4" />, label: "Instagram" },
-                  { icon: <Twitter className="h-4 w-4" />, label: "Twitter / X" },
-                  { icon: <Linkedin className="h-4 w-4" />, label: "LinkedIn" },
-                  { icon: <Youtube className="h-4 w-4" />, label: "YouTube" },
-                ].map((p) => (
-                  <Button
-                    key={p.label}
-                    variant="outline"
-                    className="w-full justify-start gap-2 rounded-xl border-2 border-black font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                  >
-                    {p.icon} {p.label}
-                  </Button>
-                ))}
+                {PLATFORM_DEFS.map((p) => {
+                  const conn = getConnectedData(p.key)
+                  return (
+                    <Button
+                      key={p.key}
+                      variant="outline"
+                      onClick={() => !conn && openConnectDialog(p)}
+                      className={`w-full justify-start gap-2 rounded-xl border-2 border-black font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+                        conn ? "opacity-100" : "opacity-60"
+                      }`}
+                    >
+                      {p.icon}
+                      <span className="flex-1 text-left">{conn ? conn.username : p.label}</span>
+                      {conn && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
+                    </Button>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Solo founder tagline */}
             <div className="mt-auto border-2 border-black rounded-xl p-3 bg-card">
               <p className="text-xs font-bold text-muted-foreground leading-relaxed text-balance">
                 Built for solo founders who create, publish, and grow — all on their own.
@@ -127,7 +250,7 @@ export default function Dashboard() {
             </div>
           </aside>
 
-          {/* Main content area */}
+          {/* Main */}
           <main className="overflow-auto p-4 sm:p-6">
 
             {/* Connected accounts */}
@@ -136,28 +259,29 @@ export default function Dashboard() {
                 CONNECTED ACCOUNTS
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <SocialMediaCard
-                  platform="Instagram"
-                  username="@yourbrand"
-                  icon={<Instagram className="h-6 w-6" />}
-                  color="bg-gradient-to-br from-yellow-400 to-pink-500"
-                />
-                <SocialMediaCard
-                  platform="Twitter / X"
-                  username="@yourbrand"
-                  icon={<Twitter className="h-6 w-6" />}
-                  color="bg-gradient-to-br from-pink-400 to-rose-600"
-                />
-                <SocialMediaCard
-                  platform="LinkedIn"
-                  username="Your Brand"
-                  icon={<Linkedin className="h-6 w-6" />}
-                  color="bg-gradient-to-br from-yellow-500 to-orange-500"
-                />
-                <Button className="h-full min-h-[120px] border-4 border-dashed border-black rounded-xl flex flex-col items-center justify-center gap-2 bg-secondary hover:bg-muted text-foreground font-bold">
+                {PLATFORM_DEFS.map((def) => {
+                  const conn = getConnectedData(def.key)
+                  return (
+                    <SocialMediaCard
+                      key={def.key}
+                      platform={def.label}
+                      platformKey={def.key}
+                      username={conn?.username ?? ""}
+                      icon={def.icon}
+                      color={def.color}
+                      connected={!!conn}
+                      onConnect={() => openConnectDialog(def)}
+                      onDisconnect={() => handleDisconnect(def.key)}
+                    />
+                  )
+                })}
+                <button
+                  onClick={() => setConnectDialogOpen(true)}
+                  className="h-full min-h-[140px] border-4 border-dashed border-black rounded-xl flex flex-col items-center justify-center gap-2 bg-secondary hover:bg-muted text-foreground font-bold transition-colors"
+                >
                   <Plus className="h-8 w-8" />
                   <span className="font-bold">Add Platform</span>
-                </Button>
+                </button>
               </div>
             </section>
 
@@ -175,6 +299,7 @@ export default function Dashboard() {
                     { value: "video", label: "Short Video" },
                     { value: "story", label: "Story" },
                     { value: "survey", label: "Survey" },
+                    { value: "blog", label: "Blog" },
                   ].map((tab) => (
                     <TabsTrigger
                       key={tab.value}
@@ -185,29 +310,15 @@ export default function Dashboard() {
                     </TabsTrigger>
                   ))}
                 </TabsList>
-
-                <TabsContent value="post">
-                  <ContentCreator type="post" />
-                </TabsContent>
-                <TabsContent value="thread">
-                  <ContentCreator type="thread" />
-                </TabsContent>
-                <TabsContent value="newsletter">
-                  <ContentCreator type="newsletter" />
-                </TabsContent>
-                <TabsContent value="video">
-                  <ContentCreator type="video" />
-                </TabsContent>
-                <TabsContent value="story">
-                  <ContentCreator type="story" />
-                </TabsContent>
-                <TabsContent value="survey">
-                  <ContentCreator type="survey" />
-                </TabsContent>
+                {["post", "thread", "newsletter", "video", "story", "survey", "blog"].map((t) => (
+                  <TabsContent key={t} value={t}>
+                    <ContentCreator type={t as Parameters<typeof ContentCreator>[0]["type"]} />
+                  </TabsContent>
+                ))}
               </Tabs>
             </section>
 
-            {/* Content studio */}
+            {/* Studio */}
             <section aria-labelledby="studio-heading">
               <h2 id="studio-heading" className="text-xl sm:text-2xl font-black mb-4 tracking-tight">
                 CONTENT STUDIO
@@ -217,6 +328,74 @@ export default function Dashboard() {
           </main>
         </div>
       </div>
+
+      {/* Connect Account Dialog */}
+      <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
+        <DialogContent className="border-4 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black">
+              {connectTarget ? `Connect ${connectTarget.label}` : "Connect a Platform"}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium">
+              Enter your handle or page name. SoloSuccess Content Factory will link it for scheduling and publishing.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!connectTarget ? (
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {PLATFORM_DEFS.map((def) => (
+                <button
+                  key={def.key}
+                  onClick={() => setConnectTarget(def)}
+                  className={`rounded-xl border-4 border-black p-4 flex flex-col items-center gap-2 font-bold text-sm text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${def.color}`}
+                >
+                  {def.icon}
+                  {def.label}
+                </button>
+              ))}
+            </div>
+          ) : connected ? (
+            <div className="flex flex-col items-center gap-3 py-4">
+              <CheckCircle2 className="h-12 w-12 text-green-500" />
+              <p className="font-black text-lg">Connected!</p>
+              <p className="text-muted-foreground text-sm">{usernameInput} is now linked.</p>
+            </div>
+          ) : (
+            <div className="space-y-4 pt-2">
+              <div>
+                <Label className="font-bold mb-2 block">
+                  Your {connectTarget.label} handle / username
+                </Label>
+                <Input
+                  placeholder={connectTarget.placeholder}
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleConnect() }}
+                  className="border-2 border-black rounded-xl h-11"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-2 border-black rounded-xl font-bold"
+                  onClick={() => setConnectTarget(null)}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleConnect}
+                  disabled={!usernameInput.trim() || connecting}
+                  className="flex-1 bg-black hover:bg-black/80 text-white border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex gap-2"
+                >
+                  {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {connecting ? "Connecting..." : `Connect ${connectTarget.label}`}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
