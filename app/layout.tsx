@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'SoloSuccess Content Factory',
+  description: 'The all-in-one content creation hub built for solo founders and solo business owners.',
   generator: 'v0.app',
   icons: {
     icon: [
