@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useTheme } from 'next-themes'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { LogOut, User } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { LogOut, User, Moon, Sun, Settings } from 'lucide-react'
+import Link from 'next/link'
 
 interface UserMenuProps {
   email: string
@@ -21,6 +24,8 @@ interface UserMenuProps {
 export default function UserMenu({ email }: UserMenuProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === 'dark'
 
   const handleSignOut = async () => {
     setLoading(true)
@@ -48,7 +53,7 @@ export default function UserMenu({ email }: UserMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[200px]"
+        className="border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-w-[220px]"
       >
         <DropdownMenuLabel className="font-black text-xs tracking-widest uppercase text-muted-foreground">
           My Account
@@ -57,6 +62,31 @@ export default function UserMenu({ email }: UserMenuProps) {
         <DropdownMenuItem className="font-medium flex gap-2 cursor-default" disabled>
           <User className="h-4 w-4" />
           <span className="truncate">{email}</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-black/20" />
+        <DropdownMenuItem asChild>
+          <Link href="/settings/profile" className="flex gap-2 font-bold cursor-pointer">
+            <Settings className="h-4 w-4" />
+            Profile Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-black/20" />
+        {/* Dark mode toggle */}
+        <DropdownMenuItem
+          className="flex items-center justify-between gap-2 cursor-pointer"
+          onSelect={(e) => e.preventDefault()}
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+        >
+          <div className="flex items-center gap-2 font-bold">
+            {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            {isDark ? 'Dark Mode' : 'Light Mode'}
+          </div>
+          <Switch
+            checked={isDark}
+            onCheckedChange={(v) => setTheme(v ? 'dark' : 'light')}
+            className="pointer-events-none"
+            aria-label="Toggle dark mode"
+          />
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-black/20" />
         <DropdownMenuItem
@@ -71,3 +101,4 @@ export default function UserMenu({ email }: UserMenuProps) {
     </DropdownMenu>
   )
 }
+

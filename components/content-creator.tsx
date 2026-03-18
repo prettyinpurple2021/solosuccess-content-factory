@@ -11,8 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
+import { toast } from "sonner"
 import {
   Instagram, Linkedin, Twitter, Youtube,
   CalendarIcon, Send, ChevronDown,
@@ -21,8 +20,9 @@ import {
 import { saveDraft, scheduleItem, getConnectedPlatforms, type PlatformKey } from "@/lib/storage"
 import { format } from "date-fns"
 import type { ScheduleButtonProps } from "@/components/creators/types"
+import AiAssistButton from "@/components/ai-assist-button"
+import DraftHistory from "@/components/draft-history"
 
-// Dynamically import each content-type creator to keep individual chunk sizes small
 const PostCreator = dynamic(() => import("@/components/creators/post-creator"), { ssr: false })
 const ThreadCreator = dynamic(() => import("@/components/creators/thread-creator"), { ssr: false })
 const NewsletterCreator = dynamic(() => import("@/components/creators/newsletter-creator"), { ssr: false })
@@ -55,19 +55,13 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
   const togglePlatform = (key: PlatformKey) =>
     setSelectedPlatforms((p) => ({ ...p, [key]: !p[key] }))
 
-  // Shared body state — each sub-component calls onBodyChange
   const [body, setBody] = useState("")
-
-  // Schedule
   const [scheduleOpen, setScheduleOpen] = useState(false)
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(scheduledDate)
   const [scheduleTime, setScheduleTime] = useState("09:00")
-
-  // Publish flow
   const [publishStatus, setPublishStatus] = useState<PublishStatus>("idle")
   const [publishResults, setPublishResults] = useState<PlatformResult[]>([])
 
-  // Autosave
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (!body.trim()) return
@@ -78,6 +72,7 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
         body,
         platforms: Object.entries(selectedPlatforms).filter(([, v]) => v).map(([k]) => k as PlatformKey),
       })
+      toast.success("Draft saved", { description: "Your content has been autosaved.", duration: 1500 })
     }, 1500)
     return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current) }
   }, [body, type, selectedPlatforms])
@@ -88,19 +83,13 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
     const dt = new Date(scheduleDate)
     dt.setHours(h, m, 0, 0)
     if (!body.trim()) {
-      toast({ title: "Add some content before scheduling.", variant: "destructive" })
+      toast.error("Add some content before scheduling.")
       return
     }
     const platforms = Object.entries(selectedPlatforms).filter(([, v]) => v).map(([k]) => k as PlatformKey)
     const draft = saveDraft({ type, body, platforms })
-    scheduleItem({
-      draftId: draft.id,
-      type,
-      title: body.slice(0, 60),
-      scheduledFor: dt.toISOString(),
-      platforms,
-    })
-    toast({ title: "Scheduled!", description: `Set for ${format(dt, "MMM d, yyyy 'at' h:mm a")}` })
+    scheduleItem({ draftId: draft.id, type, title: body.slice(0, 60), scheduledFor: dt.toISOString(), platforms })
+    toast.success("Scheduled!", { description: `Set for ${format(dt, "MMM d, yyyy 'at' h:mm a")}` })
     setScheduleOpen(false)
   }, [scheduleDate, scheduleTime, body, type, selectedPlatforms])
 
@@ -109,7 +98,7 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
     if (publishStatus === "confirming") {
       const targets = Object.entries(selectedPlatforms).filter(([, v]) => v).map(([k]) => k as PlatformKey)
       if (targets.length === 0) {
-        toast({ title: "Select at least one platform", variant: "destructive" })
+        toast.error("Select at least one platform")
         setPublishStatus("idle")
         return
       }
@@ -122,10 +111,11 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
         setPublishResults([...results])
       }
       setPublishStatus("done")
+      const successes = results.filter((r) => r.success).length
+      if (successes > 0) toast.success(`Published to ${successes} platform${successes > 1 ? "s" : ""}`)
     }
   }, [publishStatus, selectedPlatforms])
 
-  // Shared schedule button passed to all sub-components
   const ScheduleButton = useCallback(({ label }: ScheduleButtonProps) => (
     <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>
       <PopoverTrigger asChild>
@@ -147,7 +137,6 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
 
   return (
     <div className="grid lg:grid-cols-[1fr_280px] gap-6">
-      <Toaster />
       <Card className="border-4 border-black rounded-xl p-4 sm:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-card">
         {type === "post" && <PostCreator selectedPlatforms={selectedPlatforms} ScheduleButton={ScheduleButton} onBodyChange={setBody} />}
         {type === "thread" && <ThreadCreator ScheduleButton={ScheduleButton} onBodyChange={setBody} />}
@@ -157,7 +146,6 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
         {type === "survey" && <SurveyCreator ScheduleButton={ScheduleButton} onBodyChange={setBody} />}
         {type === "blog" && <BlogCreator ScheduleButton={ScheduleButton} onBodyChange={setBody} />}
 
-        {/* Mobile platform toggle */}
         <div className="mt-6 lg:hidden">
           <Collapsible>
             <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-black text-white rounded-xl font-bold">
@@ -174,12 +162,12 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
               <Button onClick={handlePublish} className="w-full mt-2 h-12 bg-brand-gradient-metallic text-white rounded-xl border-2 border-black font-bold text-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2">
                 <Send className="h-5 w-5" /> Publish Now
               </Button>
+              <AiAssistButton contentType={type} existingContent={body} onResult={setBody} className="w-full" />
             </CollapsibleContent>
           </Collapsible>
         </div>
       </Card>
 
-      {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-col gap-6">
         <Card className="border-4 border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-card">
           <h3 className="font-black text-sm tracking-widest uppercase text-muted-foreground mb-4">Platforms</h3>
@@ -192,6 +180,12 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
             ))}
           </div>
           <p className="text-xs text-muted-foreground font-medium mt-4">Autosaving draft as you type.</p>
+          <AiAssistButton
+            contentType={type}
+            existingContent={body}
+            onResult={setBody}
+            className="w-full mt-3"
+          />
         </Card>
 
         <Button onClick={handlePublish}
@@ -201,7 +195,6 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
         </Button>
       </div>
 
-      {/* Publish dialog */}
       <Dialog open={publishStatus === "confirming" || publishStatus === "publishing" || publishStatus === "done"}
         onOpenChange={(o) => { if (!o) { setPublishStatus("idle"); setPublishResults([]) } }}>
         <DialogContent className="border-4 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm">
