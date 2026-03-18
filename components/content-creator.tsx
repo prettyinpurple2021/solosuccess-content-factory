@@ -23,9 +23,11 @@ import {
   Trash2,
   Mail,
   BarChart2,
+  BookOpen,
+  Tag,
 } from "lucide-react"
 
-type ContentType = "post" | "thread" | "newsletter" | "video" | "story" | "survey"
+type ContentType = "post" | "thread" | "newsletter" | "video" | "story" | "survey" | "blog"
 
 interface ContentCreatorProps {
   type: ContentType
@@ -38,6 +40,7 @@ const placeholders: Record<ContentType, string> = {
   video: "Describe your short-form video concept or write a script outline...",
   story: "What story moment are you sharing today?",
   survey: "Describe what you want to learn from your audience...",
+  blog: "Start writing your blog post here...",
 }
 
 export default function ContentCreator({ type }: ContentCreatorProps) {
@@ -51,6 +54,8 @@ export default function ContentCreator({ type }: ContentCreatorProps) {
   const [threadPosts, setThreadPosts] = useState(["", ""])
   const [surveyQuestion, setSurveyQuestion] = useState("")
   const [surveyOptions, setSurveyOptions] = useState(["", ""])
+  const [blogTags, setBlogTags] = useState<string[]>([])
+  const [blogTagInput, setBlogTagInput] = useState("")
 
   const togglePlatform = (platform: keyof typeof selectedPlatforms) => {
     setSelectedPlatforms((prev) => ({ ...prev, [platform]: !prev[platform] }))
@@ -69,6 +74,15 @@ export default function ContentCreator({ type }: ContentCreatorProps) {
   }
   const updateSurveyOption = (i: number, val: string) =>
     setSurveyOptions((o) => o.map((v, idx) => (idx === i ? val : v)))
+
+  const addBlogTag = () => {
+    const trimmed = blogTagInput.trim()
+    if (trimmed && !blogTags.includes(trimmed) && blogTags.length < 10) {
+      setBlogTags((t) => [...t, trimmed])
+      setBlogTagInput("")
+    }
+  }
+  const removeBlogTag = (tag: string) => setBlogTags((t) => t.filter((v) => v !== tag))
 
   const platformsList = [
     { key: "instagram" as const, icon: <Instagram className="h-5 w-5" />, label: "Instagram" },
@@ -331,6 +345,105 @@ export default function ContentCreator({ type }: ContentCreatorProps) {
             <Button variant="outline" className="border-2 border-black rounded-xl font-bold flex gap-2 h-12 w-full">
               <Calendar className="h-5 w-5" /> Schedule Survey
             </Button>
+          </>
+        )}
+
+        {/* --- BLOG --- */}
+        {type === "blog" && (
+          <>
+            <div className="space-y-4 mb-4">
+              <div>
+                <Label className="font-bold mb-2 block flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" /> Blog Title
+                </Label>
+                <Input
+                  placeholder="Write a title that makes people stop scrolling..."
+                  className="border-2 border-black rounded-xl h-11 text-base"
+                />
+              </div>
+              <div>
+                <Label className="font-bold mb-2 block">Meta Description <span className="text-muted-foreground font-normal text-xs">(SEO — 150 chars)</span></Label>
+                <Input
+                  placeholder="One-line summary shown in search results..."
+                  className="border-2 border-black rounded-xl h-11"
+                  maxLength={150}
+                />
+              </div>
+              <div>
+                <Label className="font-bold mb-2 block">Cover Image</Label>
+                <div className="border-2 border-dashed border-black rounded-xl p-8 text-center cursor-pointer hover:bg-muted transition-colors">
+                  <ImageIcon className="mx-auto h-8 w-8 mb-2 opacity-40" />
+                  <p className="text-sm font-bold">Drop cover image or <span className="underline">browse</span></p>
+                  <p className="text-xs text-muted-foreground mt-1">Recommended: 1200 x 630px</p>
+                </div>
+              </div>
+              <div>
+                <Label className="font-bold mb-2 block">Body</Label>
+                <Textarea
+                  placeholder={placeholders.blog}
+                  className="min-h-[200px] border-2 border-black rounded-xl p-4 text-base"
+                />
+              </div>
+              <div>
+                <Label className="font-bold mb-2 block flex items-center gap-2">
+                  <Tag className="h-4 w-4" /> Tags <span className="text-muted-foreground font-normal text-xs">(up to 10)</span>
+                </Label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    value={blogTagInput}
+                    onChange={(e) => setBlogTagInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addBlogTag() } }}
+                    placeholder="e.g. solofounder, marketing..."
+                    className="border-2 border-black rounded-xl h-10 flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    className="border-2 border-black rounded-xl font-bold px-4"
+                    onClick={addBlogTag}
+                    type="button"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {blogTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {blogTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-black text-white text-xs font-bold rounded-full"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => removeBlogTag(tag)}
+                          aria-label={`Remove tag ${tag}`}
+                          className="ml-1 hover:opacity-70"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4 p-4 border-2 border-black rounded-xl bg-secondary">
+                <div className="flex items-center justify-between col-span-2">
+                  <Label className="font-bold">Allow Comments</Label>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between col-span-2">
+                  <Label className="font-bold">Mark as Featured Post</Label>
+                  <Switch />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" className="border-2 border-black rounded-xl font-bold flex gap-2 h-12">
+                <Calendar className="h-5 w-5" /> Schedule Post
+              </Button>
+              <Button variant="outline" className="border-2 border-black rounded-xl font-bold flex gap-2 h-12">
+                <Send className="h-5 w-5" /> Save Draft
+              </Button>
+            </div>
           </>
         )}
 

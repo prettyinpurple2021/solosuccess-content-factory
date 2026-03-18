@@ -175,6 +175,7 @@ export default function Dashboard() {
                     { value: "video", label: "Short Video" },
                     { value: "story", label: "Story" },
                     { value: "survey", label: "Survey" },
+                    { value: "blog", label: "Blog" },
                   ].map((tab) => (
                     <TabsTrigger
                       key={tab.value}
@@ -203,6 +204,9 @@ export default function Dashboard() {
                 </TabsContent>
                 <TabsContent value="survey">
                   <ContentCreator type="survey" />
+                </TabsContent>
+                <TabsContent value="blog">
+                  <ContentCreator type="blog" />
                 </TabsContent>
               </Tabs>
             </section>
