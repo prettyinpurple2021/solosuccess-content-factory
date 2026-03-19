@@ -7,7 +7,7 @@ export default function SignUpSuccessPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <p className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground mb-1">SOLO SUCCESS</p>
+          <p className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground mb-1">SOLOSUCCESS</p>
           <h1 className="text-4xl font-black tracking-tight text-brand-gradient">CONTENT FACTORY</h1>
         </div>
 

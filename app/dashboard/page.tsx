@@ -163,7 +163,7 @@ export default function Dashboard() {
         <header className="border-b-4 border-black p-4 sm:p-6 bg-card">
           <div className="flex justify-between items-center gap-4">
             <div className="flex flex-col leading-none">
-              <span className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+              <span className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">SOLOSUCCESS</span>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-brand-gradient">CONTENT FACTORY</h1>
             </div>
 

@@ -32,7 +32,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
               </Link>
               <div className="flex flex-col leading-none">
                 <span className="text-[10px] font-black tracking-[0.2em] uppercase text-muted-foreground">
-                  SOLO SUCCESS
+                  SOLOSUCCESS
                 </span>
                 <h1 className="text-xl sm:text-2xl font-black tracking-tight text-brand-gradient">
                   CONTENT FACTORY — STUDIO
