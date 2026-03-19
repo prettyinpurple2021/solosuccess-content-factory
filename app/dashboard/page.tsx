@@ -28,7 +28,30 @@ import {
   Lightbulb,
   CheckCircle2,
   Loader2,
+  BookOpen,
+  Rss,
 } from "lucide-react"
+
+// Inline SVGs for platforms without lucide icons
+const FacebookIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current" aria-hidden="true">
+    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.884v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+  </svg>
+)
+
+const BlueSkyIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current" aria-hidden="true">
+    <path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.204-.659-.299-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/>
+  </svg>
+)
+
+const RedditIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current" aria-hidden="true">
+    <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+  </svg>
+)
+
+const BlogIcon = () => <BookOpen className="h-6 w-6" />
 import SocialMediaCard from "@/components/social-media-card"
 import ContentCreator from "@/components/content-creator"
 import ContentAnalytics from "@/components/content-analytics"
@@ -58,6 +81,11 @@ const PLATFORM_DEFS: {
   { key: "twitter", label: "Twitter / X", color: "bg-gradient-to-br from-pink-400 to-rose-600", icon: <Twitter className="h-6 w-6" />, placeholder: "@yourbrand" },
   { key: "linkedin", label: "LinkedIn", color: "bg-gradient-to-br from-yellow-500 to-orange-500", icon: <Linkedin className="h-6 w-6" />, placeholder: "Your Name / Company" },
   { key: "youtube", label: "YouTube", color: "bg-gradient-to-br from-red-500 to-rose-700", icon: <Youtube className="h-6 w-6" />, placeholder: "@yourchannel" },
+  { key: "facebook", label: "Facebook", color: "bg-gradient-to-br from-blue-500 to-blue-700", icon: <FacebookIcon />, placeholder: "Your Page Name" },
+  { key: "bluesky", label: "BlueSky", color: "bg-gradient-to-br from-sky-400 to-cyan-600", icon: <BlueSkyIcon />, placeholder: "@you.bsky.social" },
+  { key: "reddit", label: "Reddit", color: "bg-gradient-to-br from-orange-500 to-red-600", icon: <RedditIcon />, placeholder: "r/yoursubreddit or u/yourname" },
+  { key: "blog", label: "Blog", color: "bg-gradient-to-br from-amber-400 to-yellow-600", icon: <BlogIcon />, placeholder: "https://yourblog.com" },
+  { key: "myapp", label: "My App / Site Feed", color: "bg-gradient-to-br from-violet-500 to-indigo-700", icon: <Rss className="h-6 w-6" />, placeholder: "https://yourapp.com/feed or RSS URL" },
 ]
 
 type ConnectedRow = { platform_key: string; username: string }
@@ -157,13 +185,13 @@ export default function Dashboard() {
         userId={userId}
         onComplete={(name) => { setShowOnboarding(false); setUserEmail(name); toast.success(`Welcome, ${name}! Let's start creating.`) }}
       />
-      <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-visible">
 
         {/* Header */}
         <header className="border-b-4 border-black p-4 sm:p-6 bg-card">
           <div className="flex justify-between items-center gap-4">
             <div className="flex flex-col leading-none">
-              <span className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+              <span className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">SOLOSUCCESS</span>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-brand-gradient">CONTENT FACTORY</h1>
             </div>
 
@@ -196,10 +224,10 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="grid md:grid-cols-[260px_1fr] h-[calc(100vh-6rem)]">
+        <div className="grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-6rem)]">
 
           {/* Sidebar */}
-          <aside className="hidden md:flex flex-col border-r-4 border-black bg-secondary p-4 gap-8">
+          <aside className="hidden md:flex flex-col border-r-4 border-black bg-secondary p-4 gap-8 sticky top-0 self-start h-screen overflow-y-auto">
             <nav className="space-y-1" aria-label="Main navigation">
               {NAV_ITEMS.map((item) => {
                 const isActive = pathname === item.href
@@ -249,7 +277,7 @@ export default function Dashboard() {
           </aside>
 
           {/* Main */}
-          <main className="overflow-auto p-4 sm:p-6">
+          <main className="min-h-0 p-4 sm:p-6 pb-16">
 
             {/* Connected accounts */}
             <section className="mb-8" aria-labelledby="accounts-heading">
@@ -360,7 +388,11 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-4 pt-2">
               <div>
-                <Label className="font-bold mb-2 block">Your {connectTarget.label} handle / username</Label>
+                <Label className="font-bold mb-2 block">
+                  {connectTarget.key === "blog" || connectTarget.key === "myapp"
+                    ? `Your ${connectTarget.label} URL or RSS feed`
+                    : `Your ${connectTarget.label} handle / username`}
+                </Label>
                 <Input
                   placeholder={connectTarget.placeholder}
                   value={usernameInput}
@@ -368,6 +400,7 @@ export default function Dashboard() {
                   onKeyDown={(e) => { if (e.key === "Enter") handleConnect() }}
                   className="border-2 border-black rounded-xl h-11"
                   autoFocus
+                  type={connectTarget.key === "blog" || connectTarget.key === "myapp" ? "url" : "text"}
                 />
               </div>
               <div className="flex gap-3">

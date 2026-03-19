@@ -49,7 +49,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-8">
-          <p className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground mb-1">SOLO SUCCESS</p>
+          <p className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground mb-1">SOLOSUCCESS</p>
           <h1 className="text-4xl font-black tracking-tight text-brand-gradient">CONTENT FACTORY</h1>
           <p className="text-muted-foreground font-medium mt-2">Your entire content operation. One place.</p>
         </div>

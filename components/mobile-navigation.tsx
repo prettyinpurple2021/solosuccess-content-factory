@@ -34,7 +34,7 @@ export default function MobileNavigation() {
       {/* Brand header */}
       <div className="p-6 border-b-4 border-black">
         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-muted-foreground block">
-          SOLO SUCCESS
+          SOLOSUCCESS
         </span>
         <h2 className="text-2xl font-black text-brand-gradient leading-tight">
           CONTENT FACTORY

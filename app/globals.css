@@ -7,6 +7,20 @@
     text-wrap: balance;
   }
 
+  /* Subtle dot/grid background — use on body or page wrappers */
+  .bg-grid {
+    background-image:
+      repeating-linear-gradient(0deg, #000 0, #000 1px, transparent 0, transparent 40px),
+      repeating-linear-gradient(90deg, #000 0, #000 1px, transparent 0, transparent 40px);
+    background-size: 40px 40px;
+  }
+
+  .dark .bg-grid {
+    background-image:
+      repeating-linear-gradient(0deg, #fff 0, #fff 1px, transparent 0, transparent 40px),
+      repeating-linear-gradient(90deg, #fff 0, #fff 1px, transparent 0, transparent 40px);
+  }
+
   /* Yellow → Pink metallic gradient for text */
   .text-brand-gradient {
     background: linear-gradient(
@@ -107,5 +121,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      repeating-linear-gradient(0deg, hsl(var(--foreground) / 0.04) 0, hsl(var(--foreground) / 0.04) 1px, transparent 0, transparent 40px),
+      repeating-linear-gradient(90deg, hsl(var(--foreground) / 0.04) 0, hsl(var(--foreground) / 0.04) 1px, transparent 0, transparent 40px);
+    background-size: 40px 40px;
   }
 }

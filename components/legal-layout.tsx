@@ -16,7 +16,7 @@ function LegalLayout({ title, subtitle, lastUpdated, children }: {
       <header className="sticky top-0 z-50 bg-card border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex flex-col leading-none select-none">
-            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLOSUCCESS</span>
             <span className="text-lg font-black text-brand-gradient tracking-tight leading-none">CONTENT FACTORY</span>
           </Link>
           <Button variant="outline" className="border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" asChild>
@@ -46,7 +46,7 @@ function LegalLayout({ title, subtitle, lastUpdated, children }: {
       <footer className="border-t-4 border-black bg-card py-10 mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link href="/" className="flex flex-col leading-none">
-            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLOSUCCESS</span>
             <span className="text-lg font-black text-brand-gradient">CONTENT FACTORY</span>
           </Link>
           <div className="flex flex-wrap gap-6 text-sm font-bold">

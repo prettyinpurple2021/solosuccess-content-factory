@@ -90,7 +90,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 bg-card border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex flex-col leading-none select-none">
-            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLOSUCCESS</span>
             <span className="text-lg font-black text-brand-gradient tracking-tight leading-none">CONTENT FACTORY</span>
           </div>
           <nav className="hidden md:flex items-center gap-6" aria-label="Site navigation">
@@ -112,9 +112,7 @@ export default function LandingPage() {
       </header>
 
       {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden border-b-4 border-black bg-card">
-        {/* Decorative grid bg */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "repeating-linear-gradient(0deg,#000 0,#000 1px,transparent 0,transparent 40px),repeating-linear-gradient(90deg,#000 0,#000 1px,transparent 0,transparent 40px)" }} aria-hidden="true" />
+      <section className="relative overflow-hidden border-b-4 border-black bg-card/80 backdrop-blur-[1px]">
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36">
           <div className="max-w-4xl">
@@ -329,7 +327,7 @@ export default function LandingPage() {
       <footer className="border-t-4 border-black bg-card py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-col leading-none">
-            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLO SUCCESS</span>
+            <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLOSUCCESS</span>
             <span className="text-lg font-black text-brand-gradient">CONTENT FACTORY</span>
           </div>
           <p className="text-sm text-muted-foreground font-medium">
