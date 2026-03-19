@@ -185,7 +185,7 @@ export default function Dashboard() {
         userId={userId}
         onComplete={(name) => { setShowOnboarding(false); setUserEmail(name); toast.success(`Welcome, ${name}! Let's start creating.`) }}
       />
-      <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto bg-card border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-visible">
 
         {/* Header */}
         <header className="border-b-4 border-black p-4 sm:p-6 bg-card">
@@ -224,10 +224,10 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="grid md:grid-cols-[260px_1fr] h-[calc(100vh-6rem)]">
+        <div className="grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-6rem)]">
 
           {/* Sidebar */}
-          <aside className="hidden md:flex flex-col border-r-4 border-black bg-secondary p-4 gap-8">
+          <aside className="hidden md:flex flex-col border-r-4 border-black bg-secondary p-4 gap-8 sticky top-0 self-start h-screen overflow-y-auto">
             <nav className="space-y-1" aria-label="Main navigation">
               {NAV_ITEMS.map((item) => {
                 const isActive = pathname === item.href
@@ -277,7 +277,7 @@ export default function Dashboard() {
           </aside>
 
           {/* Main */}
-          <main className="overflow-auto p-4 sm:p-6">
+          <main className="min-h-0 p-4 sm:p-6 pb-16">
 
             {/* Connected accounts */}
             <section className="mb-8" aria-labelledby="accounts-heading">
