@@ -1,7 +1,7 @@
 // lib/storage.ts — typed localStorage helpers for SoloSuccess Content Factory
 // All functions are safe to call server-side (they no-op when window is undefined)
 
-export type PlatformKey = "instagram" | "twitter" | "linkedin" | "youtube" | "tiktok" | "facebook" | "bluesky" | "reddit" | "blog"
+export type PlatformKey = "instagram" | "twitter" | "linkedin" | "youtube" | "tiktok" | "facebook" | "bluesky" | "reddit" | "blog" | "myapp"
 
 export interface ConnectedPlatform {
   key: PlatformKey

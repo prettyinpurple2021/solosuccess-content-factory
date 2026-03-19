@@ -29,6 +29,7 @@ import {
   CheckCircle2,
   Loader2,
   BookOpen,
+  Rss,
 } from "lucide-react"
 
 // Inline SVGs for platforms without lucide icons
@@ -84,6 +85,7 @@ const PLATFORM_DEFS: {
   { key: "bluesky", label: "BlueSky", color: "bg-gradient-to-br from-sky-400 to-cyan-600", icon: <BlueSkyIcon />, placeholder: "@you.bsky.social" },
   { key: "reddit", label: "Reddit", color: "bg-gradient-to-br from-orange-500 to-red-600", icon: <RedditIcon />, placeholder: "r/yoursubreddit or u/yourname" },
   { key: "blog", label: "Blog", color: "bg-gradient-to-br from-amber-400 to-yellow-600", icon: <BlogIcon />, placeholder: "https://yourblog.com" },
+  { key: "myapp", label: "My App / Site Feed", color: "bg-gradient-to-br from-violet-500 to-indigo-700", icon: <Rss className="h-6 w-6" />, placeholder: "https://yourapp.com/feed or RSS URL" },
 ]
 
 type ConnectedRow = { platform_key: string; username: string }
@@ -387,7 +389,9 @@ export default function Dashboard() {
             <div className="space-y-4 pt-2">
               <div>
                 <Label className="font-bold mb-2 block">
-                  {connectTarget.key === "blog" ? "Your blog URL" : `Your ${connectTarget.label} handle / username`}
+                  {connectTarget.key === "blog" || connectTarget.key === "myapp"
+                    ? `Your ${connectTarget.label} URL or RSS feed`
+                    : `Your ${connectTarget.label} handle / username`}
                 </Label>
                 <Input
                   placeholder={connectTarget.placeholder}
@@ -396,7 +400,7 @@ export default function Dashboard() {
                   onKeyDown={(e) => { if (e.key === "Enter") handleConnect() }}
                   className="border-2 border-black rounded-xl h-11"
                   autoFocus
-                  type={connectTarget.key === "blog" ? "url" : "text"}
+                  type={connectTarget.key === "blog" || connectTarget.key === "myapp" ? "url" : "text"}
                 />
               </div>
               <div className="flex gap-3">
