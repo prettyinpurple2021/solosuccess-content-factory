@@ -17,7 +17,7 @@ import {
   CalendarIcon, Send, ChevronDown,
   Loader2, CheckCircle2, XCircle,
 } from "lucide-react"
-import { saveDraft, scheduleItem, getConnectedPlatforms, type PlatformKey } from "@/lib/storage"
+import { saveDraft, scheduleItem, type PlatformKey } from "@/lib/storage"
 import { format } from "date-fns"
 import type { ScheduleButtonProps } from "@/components/creators/types"
 import AiAssistButton from "@/components/ai-assist-button"
@@ -102,19 +102,45 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
         setPublishStatus("idle")
         return
       }
-      setPublishStatus("publishing")
-      const connected = getConnectedPlatforms().map((p) => p.key)
-      const results: PlatformResult[] = []
-      for (const key of targets) {
-        await new Promise((r) => setTimeout(r, 700))
-        results.push({ key, label: PLATFORM_DEFS.find((p) => p.key === key)?.label ?? key, success: connected.includes(key) })
-        setPublishResults([...results])
+      if (!body.trim()) {
+        toast.error("Write some content before publishing.")
+        setPublishStatus("idle")
+        return
       }
-      setPublishStatus("done")
-      const successes = results.filter((r) => r.success).length
-      if (successes > 0) toast.success(`Published to ${successes} platform${successes > 1 ? "s" : ""}`)
+      setPublishStatus("publishing")
+
+      try {
+        const res = await fetch("/api/publish", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ platforms: targets, body, contentType: type }),
+        })
+        const data = await res.json()
+        const apiResults: PlatformResult[] = (data.results ?? []).map(
+          (r: { platform: PlatformKey; success: boolean; error?: string }) => ({
+            key: r.platform,
+            label: PLATFORM_DEFS.find((p) => p.key === r.platform)?.label ?? r.platform,
+            success: r.success,
+            error: r.error,
+          })
+        )
+        // Fill in any platforms not returned (e.g. not supported yet)
+        for (const t of targets) {
+          if (!apiResults.find((r) => r.key === t)) {
+            apiResults.push({ key: t, label: PLATFORM_DEFS.find((p) => p.key === t)?.label ?? t, success: false })
+          }
+        }
+        setPublishResults(apiResults)
+        setPublishStatus("done")
+        const successes = apiResults.filter((r) => r.success).length
+        if (successes > 0) toast.success(`Published to ${successes} platform${successes > 1 ? "s" : ""}!`)
+        else toast.error("Publishing failed", { description: "Make sure your platforms are connected." })
+      } catch {
+        toast.error("Network error — could not reach publish API")
+        setPublishStatus("done")
+      }
     }
-  }, [publishStatus, selectedPlatforms])
+  }, [publishStatus, selectedPlatforms, body, type])
 
   const ScheduleButton = useCallback(({ label }: ScheduleButtonProps) => (
     <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>

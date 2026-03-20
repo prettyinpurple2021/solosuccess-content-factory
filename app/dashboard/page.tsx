@@ -1,12 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import React, { useState, useCallback, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -98,10 +93,37 @@ export default function Dashboard() {
   const [connectDialogOpen, setConnectDialogOpen] = useState(false)
   const [connectTarget, setConnectTarget] = useState<(typeof PLATFORM_DEFS)[0] | null>(null)
   const [usernameInput, setUsernameInput] = useState("")
+  const [blueskyPassword, setBlueskyPassword] = useState("")
   const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [userId, setUserId] = useState("")
+
+  // Handle OAuth return params
+  useEffect(() => {
+    const oauthSuccess = searchParams.get("oauth_success")
+    const oauthError = searchParams.get("oauth_error")
+    const username = searchParams.get("username")
+    if (oauthSuccess) {
+      toast.success(`${oauthSuccess.charAt(0).toUpperCase() + oauthSuccess.slice(1)} connected!`, {
+        description: username ? `Connected as ${username}` : undefined,
+      })
+      // Reload platforms
+      const supabase = createClient()
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) return
+        supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id).then(({ data }) => {
+          setPlatforms(data ?? [])
+        })
+      })
+      // Clean up URL
+      router.replace("/dashboard")
+    }
+    if (oauthError) {
+      toast.error("Connection failed", { description: `Could not connect ${oauthError.replace(/_/g, " ")}` })
+      router.replace("/dashboard")
+    }
+  }, [searchParams, router])
 
   // Load user + connected platforms from Supabase
   useEffect(() => {
@@ -140,31 +162,76 @@ export default function Dashboard() {
   }, [])
 
   const handleConnect = useCallback(async () => {
-    if (!connectTarget || !usernameInput.trim()) return
+    if (!connectTarget) return
     setConnecting(true)
+
+    const OAUTH_PLATFORMS = ["twitter", "facebook", "linkedin", "reddit"]
+
+    // OAuth platforms — redirect to start route
+    if (OAUTH_PLATFORMS.includes(connectTarget.key)) {
+      window.location.href = `/api/auth/${connectTarget.key}/start`
+      return
+    }
+
+    // BlueSky — use app password API
+    if (connectTarget.key === "bluesky") {
+      if (!usernameInput.trim() || !blueskyPassword.trim()) {
+        toast.error("Handle and app password are required")
+        setConnecting(false)
+        return
+      }
+      const res = await fetch("/api/auth/bluesky/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle: usernameInput.trim(), appPassword: blueskyPassword.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error("BlueSky connection failed", { description: data.error })
+        setConnecting(false)
+        return
+      }
+      // Also store in connected_platforms for display
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from("connected_platforms").upsert(
+          { user_id: user.id, platform_key: "bluesky", username: data.username },
+          { onConflict: "user_id,platform_key" }
+        )
+        const { data: updated } = await supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id)
+        setPlatforms(updated ?? [])
+      }
+      setConnected(true)
+      setConnecting(false)
+      toast.success(`BlueSky connected`, { description: `Connected as ${data.username}` })
+      return
+    }
+
+    // Blog / myapp / youtube / instagram / tiktok — store URL or username
+    if (!usernameInput.trim()) {
+      toast.error("Please enter a value")
+      setConnecting(false)
+      return
+    }
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    await new Promise((r) => setTimeout(r, 800))
-    const { error } = await supabase
-      .from("connected_platforms")
-      .upsert({
-        user_id: user.id,
-        platform_key: connectTarget.key,
-        username: usernameInput.trim(),
-      }, { onConflict: "user_id,platform_key" })
+    if (!user) { setConnecting(false); return }
+    const { error } = await supabase.from("connected_platforms").upsert(
+      { user_id: user.id, platform_key: connectTarget.key, username: usernameInput.trim() },
+      { onConflict: "user_id,platform_key" }
+    )
     if (error) {
       toast.error("Error connecting", { description: error.message })
       setConnecting(false)
       return
     }
-    const { data } = await supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id)
-    setPlatforms(data ?? [])
-    setConnecting(false)
+    const { data: updated } = await supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id)
+    setPlatforms(updated ?? [])
     setConnected(true)
+    setConnecting(false)
     toast.success(`${connectTarget.label} connected`, { description: `${usernameInput.trim()} is now linked.` })
-    setTimeout(() => setConnectDialogOpen(false), 1200)
-  }, [connectTarget, usernameInput])
+  }, [connectTarget, usernameInput, blueskyPassword])
 
   const handleDisconnect = useCallback(async (key: PlatformKey) => {
     const supabase = createClient()
@@ -387,33 +454,74 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4 pt-2">
-              <div>
-                <Label className="font-bold mb-2 block">
-                  {connectTarget.key === "blog" || connectTarget.key === "myapp"
-                    ? `Your ${connectTarget.label} URL or RSS feed`
-                    : `Your ${connectTarget.label} handle / username`}
-                </Label>
-                <Input
-                  placeholder={connectTarget.placeholder}
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleConnect() }}
-                  className="border-2 border-black rounded-xl h-11"
-                  autoFocus
-                  type={connectTarget.key === "blog" || connectTarget.key === "myapp" ? "url" : "text"}
-                />
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 border-2 border-black rounded-xl font-bold" onClick={() => setConnectTarget(null)}>Back</Button>
-                <Button
-                  onClick={handleConnect}
-                  disabled={!usernameInput.trim() || connecting}
-                  className="flex-1 bg-black hover:bg-black/80 text-white border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex gap-2"
-                >
-                  {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {connecting ? "Connecting..." : `Connect ${connectTarget.label}`}
-                </Button>
-              </div>
+              {/* OAuth platforms */}
+              {["twitter","facebook","linkedin","reddit"].includes(connectTarget.key) ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Click below to securely authorize SoloSuccess to post on your behalf via{" "}
+                    <strong>{connectTarget.label}</strong>. You&apos;ll be redirected to{" "}
+                    {connectTarget.label} and returned here automatically.
+                  </p>
+                  <Button
+                    onClick={handleConnect}
+                    disabled={connecting}
+                    className={`w-full h-12 text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex gap-2 items-center justify-center ${connectTarget.color}`}
+                  >
+                    {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : connectTarget.icon}
+                    {connecting ? "Redirecting..." : `Connect ${connectTarget.label}`}
+                  </Button>
+                </div>
+              ) : connectTarget.key === "bluesky" ? (
+                /* BlueSky — handle + app password */
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    BlueSky uses <strong>App Passwords</strong> (not your main password). Generate one at{" "}
+                    <a href="https://bsky.app/settings/app-passwords" target="_blank" rel="noopener noreferrer" className="underline font-bold">bsky.app/settings/app-passwords</a>.
+                  </p>
+                  <div>
+                    <Label className="font-bold mb-1 block">Handle</Label>
+                    <Input placeholder="you.bsky.social" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} className="border-2 border-black rounded-xl h-11" />
+                  </div>
+                  <div>
+                    <Label className="font-bold mb-1 block">App Password</Label>
+                    <Input placeholder="xxxx-xxxx-xxxx-xxxx" type="password" value={blueskyPassword} onChange={(e) => setBlueskyPassword(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleConnect() }} className="border-2 border-black rounded-xl h-11" />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 border-2 border-black rounded-xl font-bold" onClick={() => setConnectTarget(null)}>Back</Button>
+                    <Button onClick={handleConnect} disabled={!usernameInput.trim() || !blueskyPassword.trim() || connecting} className="flex-1 bg-sky-500 hover:bg-sky-600 text-white border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex gap-2">
+                      {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {connecting ? "Connecting..." : "Connect BlueSky"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                /* Blog / myapp / YouTube / Instagram / TikTok — URL or handle */
+                <div className="space-y-3">
+                  <div>
+                    <Label className="font-bold mb-2 block">
+                      {connectTarget.key === "blog" || connectTarget.key === "myapp"
+                        ? `Your ${connectTarget.label} URL or RSS feed`
+                        : `Your ${connectTarget.label} handle / username`}
+                    </Label>
+                    <Input
+                      placeholder={connectTarget.placeholder}
+                      value={usernameInput}
+                      onChange={(e) => setUsernameInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleConnect() }}
+                      className="border-2 border-black rounded-xl h-11"
+                      autoFocus
+                      type={connectTarget.key === "blog" || connectTarget.key === "myapp" ? "url" : "text"}
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 border-2 border-black rounded-xl font-bold" onClick={() => setConnectTarget(null)}>Back</Button>
+                    <Button onClick={handleConnect} disabled={!usernameInput.trim() || connecting} className="flex-1 bg-black hover:bg-black/80 text-white border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex gap-2">
+                      {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {connecting ? "Connecting..." : `Connect ${connectTarget.label}`}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
