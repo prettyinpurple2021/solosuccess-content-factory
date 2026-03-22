@@ -1,7 +1,12 @@
 import { streamText } from "ai"
+import { createGroq } from "@ai-sdk/groq"
 import { NextRequest } from "next/server"
 
 export const runtime = "nodejs"
+
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+})
 
 const TYPE_PROMPTS: Record<string, string> = {
   post: "Write a punchy, engaging social media post for a solo founder. Use a strong hook, keep it under 280 characters, and end with a subtle CTA. No hashtags yet.",
@@ -31,10 +36,10 @@ Avoid corporate jargon. Write like a smart, experienced founder talking to peers
     .join("\n\n")
 
   const result = streamText({
-    model: "openai/gpt-4o-mini",
+    model: groq("llama-3.3-70b-versatile"),
     system: systemPrompt,
     prompt,
-    maxOutputTokens: 800,
+    maxTokens: 800,
     temperature: 0.8,
   })
 

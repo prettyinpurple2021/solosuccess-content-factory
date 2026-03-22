@@ -1,7 +1,12 @@
 import { generateText } from "ai"
+import { createGroq } from "@ai-sdk/groq"
 import { NextRequest } from "next/server"
 
 export const runtime = "nodejs"
+
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+})
 
 const FORMAT_PROMPTS: Record<string, string> = {
   twitter: `Rewrite the following content as a punchy Twitter/X post for a solo founder. 
@@ -36,10 +41,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { text } = await generateText({
-    model: "openai/gpt-4o-mini",
+    model: groq("llama-3.3-70b-versatile"),
     system: `You are an expert content strategist for solo founders. ${systemPrompt}`,
     prompt: `Here is the original content to repurpose:\n\n${input.trim()}`,
-    maxOutputTokens: 600,
+    maxTokens: 600,
     temperature: 0.75,
   })
 
