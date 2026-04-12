@@ -7,9 +7,25 @@ const nextConfig = {
   },
 
   images: {
-    // Keep unoptimized for simpler deployment
-    // Consider enabling optimization for better performance
-    unoptimized: true,
+    // Enable automatic image optimization with modern formats
+    unoptimized: false,
+    // Prefer AVIF for best compression, fallback to WebP
+    formats: ["image/avif", "image/webp"],
+    // Responsive image sizes for different devices
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    // Smaller sizes for thumbnails and icons
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Allow external image domains if needed (add as needed)
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "**.supabase.in",
+      },
+    ],
   },
 
   // Security headers
