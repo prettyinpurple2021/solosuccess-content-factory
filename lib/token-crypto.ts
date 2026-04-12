@@ -6,10 +6,29 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto"
 
 const ALGORITHM = "aes-256-gcm"
-const SECRET = process.env.PLATFORM_TOKEN_SECRET ?? "fallback-dev-secret-change-in-prod!!"
+const SECRET = process.env.PLATFORM_TOKEN_SECRET
+
+// Validate token secret in production
+if (!SECRET && process.env.NODE_ENV === "production") {
+  throw new Error(
+    "PLATFORM_TOKEN_SECRET environment variable is required in production. " +
+      "Generate a secure 32+ character secret for token encryption."
+  )
+}
+
+// Warn in development if using fallback
+if (!SECRET && process.env.NODE_ENV !== "production") {
+  console.warn(
+    "[SECURITY WARNING] PLATFORM_TOKEN_SECRET is not set. " +
+      "Using insecure fallback - DO NOT use in production!"
+  )
+}
+
+const FALLBACK_SECRET = "fallback-dev-secret-change-in-prod!!"
+const EFFECTIVE_SECRET = SECRET ?? FALLBACK_SECRET
 
 function getKey(): Buffer {
-  return scryptSync(SECRET, "solosuccess-salt", 32)
+  return scryptSync(EFFECTIVE_SECRET, "solosuccess-salt", 32)
 }
 
 export function encryptToken(data: object): Buffer {
