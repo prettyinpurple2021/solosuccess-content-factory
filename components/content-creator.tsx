@@ -50,7 +50,7 @@ type PlatformResult = { key: PlatformKey; label: string; success: boolean }
 
 export default function ContentCreator({ type, scheduledDate }: ContentCreatorProps) {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Record<PlatformKey, boolean>>({
-    instagram: true, twitter: true, linkedin: false, youtube: false, tiktok: false, facebook: false,
+    instagram: true, twitter: true, linkedin: false, youtube: false, tiktok: false, facebook: false, bluesky: false, reddit: false, blog: false, myapp: false,
   })
   const togglePlatform = (key: PlatformKey) =>
     setSelectedPlatforms((p) => ({ ...p, [key]: !p[key] }))
@@ -214,7 +214,7 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
           />
         </Card>
 
-        <DraftHistory contentType={type} onRestore={(draft) => { setBody(draft.body); toast.success("Draft restored") }} />
+        <DraftHistory currentType={type} onRestore={(draft) => { setBody(draft.body); toast.success("Draft restored") }} />
 
         <Button onClick={handlePublish}
           className="w-full h-14 bg-brand-gradient-metallic text-white rounded-xl border-2 border-black font-bold text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2">

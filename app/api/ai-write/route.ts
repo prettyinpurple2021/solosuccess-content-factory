@@ -71,7 +71,7 @@ Avoid corporate jargon. Write like a smart, experienced founder talking to peers
       model: groq("llama-3.3-70b-versatile"),
       system: systemPrompt,
       prompt,
-      maxTokens: 800,
+      maxOutputTokens: 800,
       temperature: 0.8,
     })
 

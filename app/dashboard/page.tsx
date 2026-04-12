@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState, useCallback, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -55,6 +56,10 @@ import MobileNavigation from "@/components/mobile-navigation"
 import UserMenu from "@/components/user-menu"
 import OnboardingDialog from "@/components/onboarding-dialog"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
 import type { PlatformKey } from "@/lib/storage"
 
@@ -88,6 +93,7 @@ type ConnectedRow = { platform_key: string; username: string }
 export default function Dashboard() {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [userEmail, setUserEmail] = useState<string>("")
   const [platforms, setPlatforms] = useState<ConnectedRow[]>([])
   const [connectDialogOpen, setConnectDialogOpen] = useState(false)
