@@ -1,6 +1,8 @@
 import { generateText } from "ai"
 import { createGroq } from "@ai-sdk/groq"
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { repurposeSchema, formatZodError } from "@/lib/validations/api"
 
 export const runtime = "nodejs"
 
@@ -29,24 +31,49 @@ Rules: Click-worthy H1 title, meta description under 155 chars, 4-5 H2 sections 
 }
 
 export async function POST(req: NextRequest) {
-  const { formatId, input } = await req.json()
+  // ─── Authentication ─────────────────────────────────────────────────────────
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!input?.trim()) {
-    return Response.json({ error: "No input provided" }, { status: 400 })
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const systemPrompt = FORMAT_PROMPTS[formatId as keyof typeof FORMAT_PROMPTS]
+  // ─── Input Validation ───────────────────────────────────────────────────────
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+  }
+
+  const parsed = repurposeSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: formatZodError(parsed.error) }, { status: 400 })
+  }
+
+  const { formatId, input } = parsed.data
+
+  const systemPrompt = FORMAT_PROMPTS[formatId]
   if (!systemPrompt) {
-    return Response.json({ error: "Unknown format" }, { status: 400 })
+    return NextResponse.json({ error: "Unknown format" }, { status: 400 })
   }
 
-  const { text } = await generateText({
-    model: groq("llama-3.3-70b-versatile"),
-    system: `You are an expert content strategist for solo founders. ${systemPrompt}`,
-    prompt: `Here is the original content to repurpose:\n\n${input.trim()}`,
-    maxTokens: 600,
-    temperature: 0.75,
-  })
+  // ─── AI Generation ──────────────────────────────────────────────────────────
+  try {
+    const { text } = await generateText({
+      model: groq("llama-3.3-70b-versatile"),
+      system: `You are an expert content strategist for solo founders. ${systemPrompt}`,
+      prompt: `Here is the original content to repurpose:\n\n${input}`,
+      maxTokens: 600,
+      temperature: 0.75,
+    })
 
-  return Response.json({ text })
+    return NextResponse.json({ text })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "AI generation failed"
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

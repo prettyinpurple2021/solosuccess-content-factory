@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getPlatformToken, savePlatformToken } from "@/lib/platform-tokens"
+import { publishSchema, formatZodError } from "@/lib/validations/api"
 import type { PlatformKey } from "@/lib/storage"
 
 // ─── Twitter ─────────────────────────────────────────────────────────────────
@@ -208,13 +209,25 @@ async function publishReddit(
 // ─── Main handler ─────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { platforms, body, contentType = "post", subreddit } = await req.json()
-  if (!platforms?.length || !body) {
-    return NextResponse.json({ error: "platforms and body are required" }, { status: 400 })
+  // ─── Input Validation ───────────────────────────────────────────────────────
+  let requestBody: unknown
+  try {
+    requestBody = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
+
+  const parsed = publishSchema.safeParse(requestBody)
+  if (!parsed.success) {
+    return NextResponse.json({ error: formatZodError(parsed.error) }, { status: 400 })
+  }
+
+  const { platforms, body, contentType, subreddit } = parsed.data
 
   const results: { platform: string; success: boolean; postId?: string; error?: string }[] = []
 
