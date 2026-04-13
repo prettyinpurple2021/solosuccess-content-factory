@@ -84,7 +84,7 @@ const TESTIMONIALS = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="min-h-screen font-sans">
 
       {/* ─── Navbar ─── */}
       <header className="sticky top-0 z-50 bg-card border-b-4 border-black">
