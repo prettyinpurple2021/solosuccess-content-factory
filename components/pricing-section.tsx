@@ -70,12 +70,16 @@ export function PricingSection() {
           {/* Annual toggle */}
           <div className="inline-flex items-center gap-3 mt-8 border-4 border-black rounded-2xl p-1 bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <button
+              type="button"
+              aria-pressed={!annual}
               onClick={() => setAnnual(false)}
               className={`px-5 py-2 rounded-xl font-black text-sm transition-all ${!annual ? "bg-black text-white" : "text-muted-foreground hover:text-foreground"}`}
             >
               Monthly
             </button>
             <button
+              type="button"
+              aria-pressed={annual}
               onClick={() => setAnnual(true)}
               className={`px-5 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${annual ? "bg-black text-white" : "text-muted-foreground hover:text-foreground"}`}
             >
