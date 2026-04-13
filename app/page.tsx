@@ -1,9 +1,18 @@
-"use client"
-
-import { useState } from "react"
 import Link from "next/link"
-import { ArrowRight, FileText, CalendarDays, Repeat2, Lightbulb, BarChart2, BookOpen, Video, Mail, MessageSquare, LayoutDashboard, ImageIcon, CheckCircle2 } from "lucide-react"
+import {
+  ArrowRight,
+  FileText,
+  CalendarDays,
+  Repeat2,
+  Lightbulb,
+  BarChart2,
+  BookOpen,
+  Video,
+  Mail,
+  LayoutDashboard,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PricingSection } from "@/components/pricing-section"
 
 const FEATURES = [
   {
@@ -56,57 +65,6 @@ const FEATURES = [
   },
 ]
 
-const PLANS = [
-  {
-    name: "Starter",
-    price: { monthly: 9, annual: 7 },
-    description: "For solo founders just getting started with content.",
-    color: "bg-[#FFD700]",
-    cta: "Start 7-Day Trial",
-    highlight: false,
-    features: [
-      "50 generations / month",
-      "2 platform connections",
-      "All 7 content types",
-      "Content Calendar (manual)",
-      "Ideas / Swipe File",
-      "Draft autosave",
-    ],
-  },
-  {
-    name: "Creator",
-    price: { monthly: 29, annual: 23 },
-    description: "The sweet spot for daily content publishers.",
-    color: "bg-[#FF2D78]",
-    cta: "Start 7-Day Trial",
-    highlight: true,
-    features: [
-      "300 generations / month",
-      "4 platform connections",
-      "Everything in Starter",
-      "Full repurpose engine",
-      "Content Calendar with scheduling",
-      "Priority generation speed",
-    ],
-  },
-  {
-    name: "Pro",
-    price: { monthly: 59, annual: 47 },
-    description: "For power users replacing 3+ tools.",
-    color: "bg-[#FF6B6B]",
-    cta: "Start 7-Day Trial",
-    highlight: false,
-    features: [
-      "Unlimited generations (fair use)",
-      "4+ platform connections",
-      "Everything in Creator",
-      "Bulk repurpose batching",
-      "Early access to new features",
-      "Priority support",
-    ],
-  },
-]
-
 const STATS = [
   { value: "7", label: "Content formats in one tool" },
   { value: "4", label: "Platforms, one dashboard" },
@@ -136,9 +94,13 @@ const TESTIMONIALS = [
   },
 ]
 
-export default function LandingPage() {
-  const [annual, setAnnual] = useState(false)
+const HOW_IT_WORKS = [
+  { step: "01", title: "Create Your Account", desc: "Sign up in seconds. No credit card required. Your workspace is ready immediately.", color: "#FFD700" },
+  { step: "02", title: "Connect Your Platforms", desc: "Link Instagram, Twitter, LinkedIn, and YouTube. All your channels, one command centre.", color: "#FF6B6B" },
+  { step: "03", title: "Create, Repurpose & Publish", desc: "Write content once, repurpose it everywhere, and schedule posts without leaving the app.", color: "#FF2D78" },
+]
 
+export default function LandingPage() {
   return (
     <div className="min-h-screen font-sans">
 
@@ -151,17 +113,30 @@ export default function LandingPage() {
           </div>
           <nav className="hidden md:flex items-center gap-6" aria-label="Site navigation">
             {["Features", "How It Works", "Pricing"].map((label) => (
-              <a key={label} href={`#${label.toLowerCase().replace(/\s/g, "-")}`} className="font-bold text-sm hover:underline underline-offset-4">
+              <a
+                key={label}
+                href={`#${label.toLowerCase().replace(/\s/g, "-")}`}
+                className="font-bold text-sm hover:underline underline-offset-4"
+              >
                 {label}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hidden sm:inline-flex" asChild>
+            <Button
+              variant="outline"
+              className="border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hidden sm:inline-flex"
+              asChild
+            >
               <Link href="/auth/login">Log In</Link>
             </Button>
-            <Button className="bg-black text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(255,45,120,1)] hover:shadow-[2px_2px_0px_0px_rgba(255,45,120,1)] hover:translate-y-0.5 transition-all" asChild>
-              <Link href="/auth/sign-up">Start Free <ArrowRight className="h-4 w-4 ml-1" /></Link>
+            <Button
+              className="bg-black text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(255,45,120,1)] hover:shadow-[2px_2px_0px_0px_rgba(255,45,120,1)] hover:translate-y-0.5 transition-all"
+              asChild
+            >
+              <Link href="/auth/sign-up">
+                Start Free <ArrowRight className="h-4 w-4 ml-1" />
+              </Link>
             </Button>
           </div>
         </div>
@@ -169,24 +144,22 @@ export default function LandingPage() {
 
       {/* ─── Hero ─── */}
       <section className="relative overflow-hidden border-b-4 border-black">
-
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36">
           <div className="max-w-4xl">
-            {/* Tag */}
             <div className="inline-flex items-center gap-2 bg-[#FFD700] border-2 border-black rounded-full px-4 py-1.5 mb-8 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <LayoutDashboard className="h-4 w-4" />
-              <span className="text-xs font-black tracking-widest uppercase">The solo founder's content OS</span>
+              <span className="text-xs font-black tracking-widest uppercase">The solo founder&apos;s content OS</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] text-balance mb-8">
               CREATE.{" "}
               <span className="text-brand-gradient">PUBLISH.</span>
               <br />
-              GROW — SOLO.
+              GROW &mdash; SOLO.
             </h1>
 
             <p className="text-lg sm:text-xl md:text-2xl font-medium text-muted-foreground max-w-2xl leading-relaxed mb-10 text-balance">
-              SoloSuccess Content Factory is the all-in-one content workspace built for one-person businesses. Write, schedule, repurpose, and publish — without a team.
+              SoloSuccess Content Factory is the all-in-one content workspace built for one-person businesses. Write, schedule, repurpose, and publish &mdash; without a team.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -195,7 +168,9 @@ export default function LandingPage() {
                 className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-lg h-14 px-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all"
                 asChild
               >
-                <Link href="/auth/sign-up">Start for Free <ArrowRight className="h-5 w-5 ml-2" /></Link>
+                <Link href="/auth/sign-up">
+                  Start for Free <ArrowRight className="h-5 w-5 ml-2" />
+                </Link>
               </Button>
               <Button
                 size="lg"
@@ -243,7 +218,7 @@ export default function LandingPage() {
           <div className="mb-14">
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Everything you need</span>
             <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2 text-balance">
-              YOUR ENTIRE CONTENT OPERATION,<br className="hidden md:block" />{" "}
+              YOUR ENTIRE CONTENT OPERATION,{" "}
               <span className="text-brand-gradient">IN ONE FACTORY.</span>
             </h2>
           </div>
@@ -274,13 +249,9 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { step: "01", title: "Create Your Account", desc: "Sign up in seconds. No credit card required. Your workspace is ready immediately.", color: "bg-[#FFD700]" },
-              { step: "02", title: "Connect Your Platforms", desc: "Link Instagram, Twitter, LinkedIn, and YouTube. All your channels, one command centre.", color: "bg-[#FF6B6B]" },
-              { step: "03", title: "Create, Repurpose & Publish", desc: "Write content once, repurpose it everywhere, and schedule posts without leaving the app.", color: "bg-[#FF2D78]" },
-            ].map((s) => (
+            {HOW_IT_WORKS.map((s) => (
               <div key={s.step} className="border-4 border-black rounded-2xl bg-card p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
-                <span className={`text-5xl font-black ${s.color.replace("bg-", "text-[")}]`} style={{ color: s.color === "bg-[#FFD700]" ? "#FFD700" : s.color === "bg-[#FF6B6B]" ? "#FF6B6B" : "#FF2D78" }}>
+                <span className="text-5xl font-black" style={{ color: s.color }}>
                   {s.step}
                 </span>
                 <h3 className="text-2xl font-black">{s.title}</h3>
@@ -301,7 +272,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t) => (
               <div key={t.name} className="border-4 border-black rounded-2xl p-8 bg-secondary shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6">
-                <p className="text-lg font-medium leading-relaxed flex-1">{`"${t.quote}"`}</p>
+                <p className="text-lg font-medium leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
                 <div className="flex items-center gap-3 border-t-2 border-black pt-4">
                   <div className="w-10 h-10 bg-brand-gradient-metallic rounded-full border-2 border-black flex items-center justify-center text-white font-black text-sm">
                     {t.name[0]}
@@ -318,86 +289,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Pricing ─── */}
-      <section id="pricing" className="py-20 md:py-28 border-b-4 border-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="mb-14 text-center">
-            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Pricing</span>
-            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2 text-balance">PLANS BUILT FOR SOLO FOUNDERS</h2>
-            <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">No feature gating. No seat limits. Pay for volume, not capability.</p>
-
-            {/* Annual toggle */}
-            <div className="inline-flex items-center gap-3 mt-8 border-4 border-black rounded-2xl p-1 bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <button
-                onClick={() => setAnnual(false)}
-                className={`px-5 py-2 rounded-xl font-black text-sm transition-all ${!annual ? "bg-black text-white" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setAnnual(true)}
-                className={`px-5 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${annual ? "bg-black text-white" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Annual
-                <span className="text-xs bg-[#FFD700] text-black px-2 py-0.5 rounded-full font-black border border-black">2 months free</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 items-start">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`border-4 border-black rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col transition-all ${plan.highlight ? "md:-translate-y-3 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]" : ""}`}
-              >
-                {/* Header */}
-                <div className={`${plan.color} p-7 border-b-4 border-black`}>
-                  {plan.highlight && (
-                    <div className="inline-block bg-black text-white text-xs font-black tracking-widest uppercase px-3 py-1 rounded-full mb-3">
-                      Most Popular
-                    </div>
-                  )}
-                  <p className="font-black text-xl text-black">{plan.name}</p>
-                  <div className="flex items-end gap-1 mt-2">
-                    <span className="text-5xl font-black text-black leading-none">
-                      ${annual ? plan.price.annual : plan.price.monthly}
-                    </span>
-                    <span className="text-black/70 font-bold mb-1">/mo</span>
-                  </div>
-                  {annual && (
-                    <p className="text-xs font-bold text-black/70 mt-1">
-                      billed ${plan.price.annual * 12}/yr
-                    </p>
-                  )}
-                  <p className="text-sm font-medium text-black/70 mt-2">{plan.description}</p>
-                </div>
-
-                {/* Features */}
-                <div className="p-7 flex flex-col gap-4 flex-1 bg-card">
-                  <ul className="space-y-3 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-3">
-                        <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                        <span className="font-bold text-sm">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    size="lg"
-                    className={`w-full mt-2 border-4 border-black rounded-2xl font-black text-base h-13 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all ${plan.highlight ? "bg-black text-white" : "bg-card text-foreground"}`}
-                    asChild
-                  >
-                    <Link href="/auth/sign-up">{plan.cta} <ArrowRight className="h-4 w-4 ml-2" /></Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center text-sm text-muted-foreground font-medium mt-10">
-            All plans include a 7-day free trial. No credit card required to start.
-          </p>
-        </div>
-      </section>
+      <PricingSection />
 
       {/* ─── Final CTA ─── */}
       <section className="py-20 md:py-28 border-b-4 border-black">
@@ -413,7 +305,9 @@ export default function LandingPage() {
             className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-xl h-16 px-12 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all"
             asChild
           >
-            <Link href="/auth/sign-up">Start Your Free Trial <ArrowRight className="h-6 w-6 ml-2" /></Link>
+            <Link href="/auth/sign-up">
+              Start Your Free Trial <ArrowRight className="h-6 w-6 ml-2" />
+            </Link>
           </Button>
         </div>
       </section>
@@ -437,6 +331,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
     </div>
   )
 }
