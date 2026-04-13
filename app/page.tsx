@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { ArrowRight, FileText, CalendarDays, Repeat2, Lightbulb, BarChart2, BookOpen, Video, Mail, MessageSquare, LayoutDashboard, ImageIcon, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -53,6 +56,57 @@ const FEATURES = [
   },
 ]
 
+const PLANS = [
+  {
+    name: "Starter",
+    price: { monthly: 9, annual: 7 },
+    description: "For solo founders just getting started with content.",
+    color: "bg-[#FFD700]",
+    cta: "Start 7-Day Trial",
+    highlight: false,
+    features: [
+      "50 generations / month",
+      "2 platform connections",
+      "All 7 content types",
+      "Content Calendar (manual)",
+      "Ideas / Swipe File",
+      "Draft autosave",
+    ],
+  },
+  {
+    name: "Creator",
+    price: { monthly: 29, annual: 23 },
+    description: "The sweet spot for daily content publishers.",
+    color: "bg-[#FF2D78]",
+    cta: "Start 7-Day Trial",
+    highlight: true,
+    features: [
+      "300 generations / month",
+      "4 platform connections",
+      "Everything in Starter",
+      "Full repurpose engine",
+      "Content Calendar with scheduling",
+      "Priority generation speed",
+    ],
+  },
+  {
+    name: "Pro",
+    price: { monthly: 59, annual: 47 },
+    description: "For power users replacing 3+ tools.",
+    color: "bg-[#FF6B6B]",
+    cta: "Start 7-Day Trial",
+    highlight: false,
+    features: [
+      "Unlimited generations (fair use)",
+      "4+ platform connections",
+      "Everything in Creator",
+      "Bulk repurpose batching",
+      "Early access to new features",
+      "Priority support",
+    ],
+  },
+]
+
 const STATS = [
   { value: "7", label: "Content formats in one tool" },
   { value: "4", label: "Platforms, one dashboard" },
@@ -83,8 +137,10 @@ const TESTIMONIALS = [
 ]
 
 export default function LandingPage() {
+  const [annual, setAnnual] = useState(false)
+
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="min-h-screen font-sans">
 
       {/* ─── Navbar ─── */}
       <header className="sticky top-0 z-50 bg-card border-b-4 border-black">
@@ -112,7 +168,7 @@ export default function LandingPage() {
       </header>
 
       {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden border-b-4 border-black bg-card/80 backdrop-blur-[1px]">
+      <section className="relative overflow-hidden border-b-4 border-black">
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36">
           <div className="max-w-4xl">
@@ -168,13 +224,13 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Stats bar ─── */}
-      <section className="bg-black text-white border-b-4 border-black" aria-label="Key statistics">
+      <section className="border-b-4 border-black" aria-label="Key statistics">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x-2 divide-white/10">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x-2 divide-black/10">
             {STATS.map((s) => (
               <div key={s.label} className="py-8 px-6 text-center">
                 <p className="text-3xl sm:text-4xl font-black text-brand-gradient">{s.value}</p>
-                <p className="text-sm font-medium text-white/60 mt-1 text-balance">{s.label}</p>
+                <p className="text-sm font-medium text-muted-foreground mt-1 text-balance">{s.label}</p>
               </div>
             ))}
           </div>
@@ -210,7 +266,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section id="how-it-works" className="py-20 md:py-28 border-b-4 border-black bg-secondary">
+      <section id="how-it-works" className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14">
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Simple by design</span>
@@ -236,7 +292,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Testimonials ─── */}
-      <section className="py-20 md:py-28 border-b-4 border-black bg-card">
+      <section className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14">
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Social proof</span>
@@ -262,69 +318,108 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Pricing ─── */}
-      <section id="pricing" className="py-20 md:py-28 border-b-4 border-black bg-secondary">
+      <section id="pricing" className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14 text-center">
-            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Simple pricing</span>
-            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2">ONE PLAN. EVERYTHING INCLUDED.</h2>
-            <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">No feature gating. No seat limits. Everything a solo founder needs from day one.</p>
-          </div>
+            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Pricing</span>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2 text-balance">PLANS BUILT FOR SOLO FOUNDERS</h2>
+            <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">No feature gating. No seat limits. Pay for volume, not capability.</p>
 
-          <div className="max-w-lg mx-auto border-4 border-black rounded-3xl bg-card shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
-            <div className="bg-brand-gradient-metallic p-8">
-              <p className="text-white font-black text-sm tracking-widest uppercase">Solo Plan</p>
-              <p className="text-white text-6xl font-black mt-2">Free</p>
-              <p className="text-white/80 mt-1 font-medium">during early access</p>
-            </div>
-            <div className="p-8 space-y-4">
-              {[
-                "All 7 content types",
-                "Content Calendar",
-                "Repurpose Engine",
-                "Ideas / Swipe File",
-                "4 platform connections",
-                "Draft autosave",
-                "Full account + data sync",
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                  <span className="font-bold">{item}</span>
-                </div>
-              ))}
-
-              <Button
-                size="lg"
-                className="w-full mt-4 bg-black text-white border-4 border-black rounded-2xl font-black text-lg h-14 shadow-[6px_6px_0px_0px_rgba(255,45,120,1)] hover:shadow-[3px_3px_0px_0px_rgba(255,45,120,1)] hover:translate-y-1 transition-all"
-                asChild
+            {/* Annual toggle */}
+            <div className="inline-flex items-center gap-3 mt-8 border-4 border-black rounded-2xl p-1 bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <button
+                onClick={() => setAnnual(false)}
+                className={`px-5 py-2 rounded-xl font-black text-sm transition-all ${!annual ? "bg-black text-white" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <Link href="/auth/sign-up">Get Started Free <ArrowRight className="h-5 w-5 ml-2" /></Link>
-              </Button>
+                Monthly
+              </button>
+              <button
+                onClick={() => setAnnual(true)}
+                className={`px-5 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${annual ? "bg-black text-white" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Annual
+                <span className="text-xs bg-[#FFD700] text-black px-2 py-0.5 rounded-full font-black border border-black">2 months free</span>
+              </button>
             </div>
           </div>
+
+          <div className="grid md:grid-cols-3 gap-6 items-start">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className={`border-4 border-black rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col transition-all ${plan.highlight ? "md:-translate-y-3 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]" : ""}`}
+              >
+                {/* Header */}
+                <div className={`${plan.color} p-7 border-b-4 border-black`}>
+                  {plan.highlight && (
+                    <div className="inline-block bg-black text-white text-xs font-black tracking-widest uppercase px-3 py-1 rounded-full mb-3">
+                      Most Popular
+                    </div>
+                  )}
+                  <p className="font-black text-xl text-black">{plan.name}</p>
+                  <div className="flex items-end gap-1 mt-2">
+                    <span className="text-5xl font-black text-black leading-none">
+                      ${annual ? plan.price.annual : plan.price.monthly}
+                    </span>
+                    <span className="text-black/70 font-bold mb-1">/mo</span>
+                  </div>
+                  {annual && (
+                    <p className="text-xs font-bold text-black/70 mt-1">
+                      billed ${plan.price.annual * 12}/yr
+                    </p>
+                  )}
+                  <p className="text-sm font-medium text-black/70 mt-2">{plan.description}</p>
+                </div>
+
+                {/* Features */}
+                <div className="p-7 flex flex-col gap-4 flex-1 bg-card">
+                  <ul className="space-y-3 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                        <span className="font-bold text-sm">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    size="lg"
+                    className={`w-full mt-2 border-4 border-black rounded-2xl font-black text-base h-13 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all ${plan.highlight ? "bg-black text-white" : "bg-card text-foreground"}`}
+                    asChild
+                  >
+                    <Link href="/auth/sign-up">{plan.cta} <ArrowRight className="h-4 w-4 ml-2" /></Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground font-medium mt-10">
+            All plans include a 7-day free trial. No credit card required to start.
+          </p>
         </div>
       </section>
 
       {/* ─── Final CTA ─── */}
-      <section className="py-20 md:py-28 bg-black text-white">
+      <section className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-brand-gradient text-balance mb-6">
             STOP JUGGLING TOOLS. START SHIPPING CONTENT.
           </h2>
-          <p className="text-white/60 text-xl max-w-xl mx-auto mb-10 leading-relaxed">
+          <p className="text-muted-foreground text-xl max-w-xl mx-auto mb-10 leading-relaxed">
             Join solo founders who build their audience with SoloSuccess Content Factory.
           </p>
           <Button
             size="lg"
-            className="bg-brand-gradient-metallic text-white border-4 border-white rounded-2xl font-black text-xl h-16 px-12 shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-1 transition-all"
+            className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-xl h-16 px-12 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all"
             asChild
           >
-            <Link href="/auth/sign-up">Create Your Free Account <ArrowRight className="h-6 w-6 ml-2" /></Link>
+            <Link href="/auth/sign-up">Start Your Free Trial <ArrowRight className="h-6 w-6 ml-2" /></Link>
           </Button>
         </div>
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t-4 border-black bg-card py-10">
+      <footer className="border-t-4 border-black py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-col leading-none">
             <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLOSUCCESS</span>

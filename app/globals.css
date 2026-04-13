@@ -120,10 +120,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: hsl(var(--background));
     background-image:
-      repeating-linear-gradient(0deg, hsl(var(--foreground) / 0.04) 0, hsl(var(--foreground) / 0.04) 1px, transparent 0, transparent 40px),
-      repeating-linear-gradient(90deg, hsl(var(--foreground) / 0.04) 0, hsl(var(--foreground) / 0.04) 1px, transparent 0, transparent 40px);
+      linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 }
