@@ -112,7 +112,7 @@ export default function LandingPage() {
       </header>
 
       {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden border-b-4 border-black bg-card/80 backdrop-blur-[1px]">
+      <section className="relative overflow-hidden border-b-4 border-black">
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36">
           <div className="max-w-4xl">
@@ -182,7 +182,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Features ─── */}
-      <section id="features" className="py-20 md:py-28 border-b-4 border-black bg-background/60 backdrop-blur-[1px]">
+      <section id="features" className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14">
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Everything you need</span>
@@ -210,7 +210,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section id="how-it-works" className="py-20 md:py-28 border-b-4 border-black bg-secondary/70 backdrop-blur-[1px]">
+      <section id="how-it-works" className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14">
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Simple by design</span>
@@ -236,7 +236,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Testimonials ─── */}
-      <section className="py-20 md:py-28 border-b-4 border-black bg-card/70 backdrop-blur-[1px]">
+      <section className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14">
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Social proof</span>
@@ -262,7 +262,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Pricing ─── */}
-      <section id="pricing" className="py-20 md:py-28 border-b-4 border-black bg-secondary/70 backdrop-blur-[1px]">
+      <section id="pricing" className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14 text-center">
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Simple pricing</span>
@@ -324,7 +324,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t-4 border-black bg-card/70 backdrop-blur-[1px] py-10">
+      <footer className="border-t-4 border-black py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-col leading-none">
             <span className="text-[9px] font-black tracking-[0.25em] uppercase text-muted-foreground">SOLOSUCCESS</span>
