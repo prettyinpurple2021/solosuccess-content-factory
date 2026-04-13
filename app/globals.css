@@ -120,10 +120,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: hsl(var(--background));
     background-image:
-      repeating-linear-gradient(0deg, hsl(var(--foreground) / 0.07) 0, hsl(var(--foreground) / 0.07) 1px, transparent 0, transparent 40px),
-      repeating-linear-gradient(90deg, hsl(var(--foreground) / 0.07) 0, hsl(var(--foreground) / 0.07) 1px, transparent 0, transparent 40px);
+      repeating-linear-gradient(0deg, hsl(var(--foreground) / 0.08) 0, hsl(var(--foreground) / 0.08) 1px, transparent 0, transparent 40px),
+      repeating-linear-gradient(90deg, hsl(var(--foreground) / 0.08) 0, hsl(var(--foreground) / 0.08) 1px, transparent 0, transparent 40px);
     background-size: 40px 40px;
   }
 }
