@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       model: groq("llama-3.3-70b-versatile"),
       system: `You are an expert content strategist for solo founders. ${systemPrompt}`,
       prompt: `Here is the original content to repurpose:\n\n${input}`,
-      maxTokens: 600,
+      maxOutputTokens: 600,
       temperature: 0.75,
     })
 
