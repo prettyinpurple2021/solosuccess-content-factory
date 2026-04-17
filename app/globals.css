@@ -74,6 +74,128 @@
   .bg-brand-gradient-metallic a {
     color: white;
   }
+
+  /* ─── Y2K / Neo-Brutalism utilities ─── */
+
+  /*
+   * Frosted Y2K glass for feature cards.
+   * Pink → Yellow gradient at ~12% opacity. No white, no purple.
+   * Pair with `backdrop-blur-md` on the element.
+   */
+  .bg-y2k-glass {
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 45, 120, 0.14) 0%,
+      rgba(255, 107, 107, 0.12) 50%,
+      rgba(255, 215, 0, 0.14) 100%
+    );
+    background-color: rgba(255, 248, 230, 0.35);
+  }
+
+  /* Soft top highlight for candy-glass sheen (Y2K flair) */
+  .y2k-sheen {
+    position: relative;
+    isolation: isolate;
+  }
+  .y2k-sheen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.08) 18%,
+      transparent 55%
+    );
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    z-index: 1;
+  }
+
+  /* Hard brutalist offset shadow (utility aliases) */
+  .shadow-brutal {
+    box-shadow: 6px 6px 0 0 rgba(0, 0, 0, 1);
+  }
+  .shadow-brutal-sm {
+    box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1);
+  }
+
+  /*
+   * Pink Cyber-Glow for primary buttons.
+   * Layers a neon pink glow ON TOP of the existing hard offset shadow
+   * so the neo-brutalism silhouette is preserved.
+   */
+  .cyber-glow-pink {
+    transition:
+      box-shadow 200ms ease,
+      transform 200ms ease,
+      filter 200ms ease;
+  }
+  .cyber-glow-pink:hover {
+    box-shadow:
+      3px 3px 0 0 rgba(0, 0, 0, 1),
+      0 0 15px 5px rgba(255, 0, 255, 0.4);
+    filter: saturate(1.1);
+  }
+  .cyber-glow-pink:focus-visible {
+    box-shadow:
+      3px 3px 0 0 rgba(0, 0, 0, 1),
+      0 0 15px 5px rgba(255, 0, 255, 0.55);
+  }
+
+  /*
+   * Chrome / holographic accent strip.
+   * Use as a thin divider or top-bar for Y2K flair.
+   * No purple — stays in the pink/yellow/cyan-tinted chrome range.
+   */
+  .y2k-chrome-strip {
+    background: linear-gradient(
+      90deg,
+      #ffd700 0%,
+      #ffec6e 15%,
+      #ff6b6b 35%,
+      #ff2d78 55%,
+      #ffec6e 78%,
+      #ffd700 100%
+    );
+    background-size: 200% 100%;
+    animation: y2k-chrome-slide 8s linear infinite;
+  }
+
+  @keyframes y2k-chrome-slide {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 200% 0%;
+    }
+  }
+
+  /* Metallic chrome sheen for small badges/pills (Y2K) */
+  .y2k-chrome-pill {
+    background: linear-gradient(
+      135deg,
+      #ffd700 0%,
+      #fff6b0 25%,
+      #ff6b6b 55%,
+      #ff2d78 100%
+    );
+    position: relative;
+    overflow: hidden;
+  }
+  .y2k-chrome-pill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(255, 255, 255, 0.1) 40%,
+      transparent 60%
+    );
+    pointer-events: none;
+  }
 }
 
 @layer base {
