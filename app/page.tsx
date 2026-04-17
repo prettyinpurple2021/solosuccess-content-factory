@@ -76,24 +76,6 @@ const CONTENT_TYPES = [
   "Social Post", "Thread", "Newsletter", "Short Video", "Story", "Survey", "Blog Post",
 ]
 
-const TESTIMONIALS = [
-  {
-    quote: "I used to jump between 6 different tools. Now everything lives in one place. My content output doubled in the first week.",
-    name: "Jordan M.",
-    role: "Indie SaaS Founder",
-  },
-  {
-    quote: "The repurpose feature alone is worth it. I write one LinkedIn post and get a full week of content across every platform.",
-    name: "Priya S.",
-    role: "Solo Business Coach",
-  },
-  {
-    quote: "As a one-person brand, I needed something that just worked. This is the content OS I didn't know I needed.",
-    name: "Alex T.",
-    role: "Creator & Consultant",
-  },
-]
-
 const HOW_IT_WORKS = [
   { step: "01", title: "Create Your Account", desc: "Sign up in seconds. No credit card required. Your workspace is ready immediately.", color: "#FFD700" },
   { step: "02", title: "Connect Your Platforms", desc: "Link Instagram, Twitter, LinkedIn, and YouTube. All your channels, one command centre.", color: "#FF6B6B" },
@@ -269,32 +251,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Testimonials ─── */}
-      <section className="py-20 md:py-28 border-b-4 border-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="mb-14">
-            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Social proof</span>
-            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2">SOLO FOUNDERS LOVE IT</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="border-4 border-black rounded-2xl p-8 bg-secondary shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6">
-                <p className="text-lg font-medium leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3 border-t-2 border-black pt-4">
-                  <div className="w-10 h-10 bg-brand-gradient-metallic rounded-full border-2 border-black flex items-center justify-center text-white font-black text-sm">
-                    {t.name[0]}
-                  </div>
-                  <div>
-                    <p className="font-black text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── Pricing ─── */}
       <PricingSection />
 
@@ -305,7 +261,7 @@ export default function LandingPage() {
             STOP JUGGLING TOOLS. START SHIPPING CONTENT.
           </h2>
           <p className="text-muted-foreground text-xl max-w-xl mx-auto mb-10 leading-relaxed">
-            Join solo founders who build their audience with SoloSuccess Content Factory.
+            One workspace to write, repurpose, schedule, and publish &mdash; built for the one-person business.
           </p>
           <Button
             size="lg"
