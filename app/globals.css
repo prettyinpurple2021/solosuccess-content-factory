@@ -135,13 +135,15 @@
   .cyber-glow-pink:hover {
     box-shadow:
       3px 3px 0 0 rgba(0, 0, 0, 1),
-      0 0 15px 5px rgba(255, 0, 255, 0.4);
+      0 0 15px 5px rgba(255, 45, 120, 0.4);
     filter: saturate(1.1);
   }
   .cyber-glow-pink:focus-visible {
     box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000),
+      var(--tw-ring-shadow, 0 0 #0000),
       3px 3px 0 0 rgba(0, 0, 0, 1),
-      0 0 15px 5px rgba(255, 0, 255, 0.55);
+      0 0 15px 5px rgba(255, 45, 120, 0.55);
   }
 
   /*
@@ -169,6 +171,12 @@
     }
     100% {
       background-position: 200% 0%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .y2k-chrome-strip {
+      animation: none;
     }
   }
 
