@@ -178,6 +178,19 @@
     .y2k-chrome-strip {
       animation: none;
     }
+    .cyber-glow-pink {
+      transition: none;
+    }
+    .cyber-glow-pink:hover {
+      box-shadow: none;
+      filter: none;
+      transform: none;
+    }
+    .cyber-glow-pink:focus-visible {
+      box-shadow:
+        var(--tw-ring-offset-shadow, 0 0 #0000),
+        var(--tw-ring-shadow, 0 0 #0000);
+    }
   }
 
   /* Metallic chrome sheen for small badges/pills (Y2K) */
