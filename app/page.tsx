@@ -76,24 +76,6 @@ const CONTENT_TYPES = [
   "Social Post", "Thread", "Newsletter", "Short Video", "Story", "Survey", "Blog Post",
 ]
 
-const TESTIMONIALS = [
-  {
-    quote: "I used to jump between 6 different tools. Now everything lives in one place. My content output doubled in the first week.",
-    name: "Jordan M.",
-    role: "Indie SaaS Founder",
-  },
-  {
-    quote: "The repurpose feature alone is worth it. I write one LinkedIn post and get a full week of content across every platform.",
-    name: "Priya S.",
-    role: "Solo Business Coach",
-  },
-  {
-    quote: "As a one-person brand, I needed something that just worked. This is the content OS I didn't know I needed.",
-    name: "Alex T.",
-    role: "Creator & Consultant",
-  },
-]
-
 const HOW_IT_WORKS = [
   { step: "01", title: "Create Your Account", desc: "Sign up in seconds. No credit card required. Your workspace is ready immediately.", color: "#FFD700" },
   { step: "02", title: "Connect Your Platforms", desc: "Link Instagram, Twitter, LinkedIn, and YouTube. All your channels, one command centre.", color: "#FF6B6B" },
@@ -131,7 +113,7 @@ export default function LandingPage() {
               <Link href="/auth/login">Log In</Link>
             </Button>
             <Button
-              className="bg-black text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(255,45,120,1)] hover:shadow-[2px_2px_0px_0px_rgba(255,45,120,1)] hover:translate-y-0.5 transition-all"
+              className="bg-black text-white border-2 border-black rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(255,45,120,1)] cyber-glow-pink hover:translate-y-0.5"
               asChild
             >
               <Link href="/auth/sign-up">
@@ -146,9 +128,9 @@ export default function LandingPage() {
       <section className="relative overflow-hidden border-b-4 border-black">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36">
           <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-2 bg-[#FFD700] border-2 border-black rounded-full px-4 py-1.5 mb-8 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="text-xs font-black tracking-widest uppercase">The solo founder&apos;s content OS</span>
+            <div className="y2k-chrome-pill inline-flex items-center gap-2 border-2 border-black rounded-full px-4 py-1.5 mb-8 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <LayoutDashboard className="h-4 w-4 relative z-10" />
+              <span className="text-xs font-black tracking-widest uppercase relative z-10">The solo founder&apos;s content OS</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] text-balance mb-8">
@@ -165,7 +147,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-lg h-14 px-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all"
+                className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-lg h-14 px-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] cyber-glow-pink hover:translate-y-1"
                 asChild
               >
                 <Link href="/auth/sign-up">
@@ -216,6 +198,11 @@ export default function LandingPage() {
       <section id="features" className="py-20 md:py-28 border-b-4 border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="mb-14">
+            {/* Y2K chrome/holographic accent strip */}
+            <div
+              className="y2k-chrome-strip h-1.5 w-24 rounded-full border-2 border-black mb-5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              aria-hidden="true"
+            />
             <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Everything you need</span>
             <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2 text-balance">
               YOUR ENTIRE CONTENT OPERATION,{" "}
@@ -227,13 +214,15 @@ export default function LandingPage() {
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className="border-4 border-black rounded-2xl p-6 bg-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all"
+                className="y2k-sheen bg-y2k-glass backdrop-blur-md border border-black rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all"
               >
-                <div className={`w-12 h-12 ${f.color} border-2 border-black rounded-xl flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]`}>
+                <div
+                  className={`relative z-10 w-12 h-12 ${f.color} border-2 border-black rounded-xl flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]`}
+                >
                   {f.icon}
                 </div>
-                <h3 className="font-black text-lg leading-snug">{f.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed flex-1">{f.desc}</p>
+                <h3 className="relative z-10 font-black text-lg leading-snug">{f.title}</h3>
+                <p className="relative z-10 text-foreground/70 text-sm leading-relaxed flex-1">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -262,32 +251,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Testimonials ─── */}
-      <section className="py-20 md:py-28 border-b-4 border-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="mb-14">
-            <span className="text-xs font-black tracking-widest uppercase text-muted-foreground">Social proof</span>
-            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mt-2">SOLO FOUNDERS LOVE IT</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="border-4 border-black rounded-2xl p-8 bg-secondary shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6">
-                <p className="text-lg font-medium leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3 border-t-2 border-black pt-4">
-                  <div className="w-10 h-10 bg-brand-gradient-metallic rounded-full border-2 border-black flex items-center justify-center text-white font-black text-sm">
-                    {t.name[0]}
-                  </div>
-                  <div>
-                    <p className="font-black text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── Pricing ─── */}
       <PricingSection />
 
@@ -298,11 +261,11 @@ export default function LandingPage() {
             STOP JUGGLING TOOLS. START SHIPPING CONTENT.
           </h2>
           <p className="text-muted-foreground text-xl max-w-xl mx-auto mb-10 leading-relaxed">
-            Join solo founders who build their audience with SoloSuccess Content Factory.
+            One workspace to write, repurpose, schedule, and publish &mdash; built for the one-person business.
           </p>
           <Button
             size="lg"
-            className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-xl h-16 px-12 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all"
+            className="bg-brand-gradient-metallic text-white border-4 border-black rounded-2xl font-black text-xl h-16 px-12 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] cyber-glow-pink hover:translate-y-1"
             asChild
           >
             <Link href="/auth/sign-up">

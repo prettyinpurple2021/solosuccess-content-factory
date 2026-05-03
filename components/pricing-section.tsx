@@ -129,7 +129,11 @@ export function PricingSection() {
                 </ul>
                 <Button
                   size="lg"
-                  className={`w-full mt-2 border-4 border-black rounded-2xl font-black text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 transition-all ${plan.highlight ? "bg-black text-white" : "bg-card text-foreground"}`}
+                  className={`w-full mt-2 border-4 border-black rounded-2xl font-black text-base shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 ${
+                    plan.highlight
+                      ? "bg-black text-white cyber-glow-pink"
+                      : "bg-card text-foreground hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  }`}
                   asChild
                 >
                   <Link href="/auth/sign-up">{plan.cta} <ArrowRight className="h-4 w-4 ml-2" /></Link>
