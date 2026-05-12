@@ -17,7 +17,8 @@ import {
   CalendarIcon, Send, ChevronDown,
   Loader2, CheckCircle2, XCircle,
 } from "lucide-react"
-import { saveDraft, scheduleItem, type PlatformKey } from "@/lib/storage"
+import { saveDraft, scheduleItem } from "@/lib/hooks/use-storage"
+import type { PlatformKey } from "@/lib/storage"
 import { format } from "date-fns"
 import type { ScheduleButtonProps } from "@/components/creators/types"
 import AiAssistButton from "@/components/ai-assist-button"

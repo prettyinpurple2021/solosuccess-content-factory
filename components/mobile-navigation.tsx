@@ -3,9 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Instagram, Linkedin, Twitter, Youtube, LayoutDashboard, CalendarDays, Repeat2, Lightbulb, CheckCircle2 } from "lucide-react"
-import { useEffect, useState } from "react"
-import { getConnectedPlatforms, type ConnectedPlatform } from "@/lib/storage"
+import { Instagram, Linkedin, Twitter, Youtube, LayoutDashboard, CalendarDays, Repeat2, Lightbulb, CheckCircle2, Loader2 } from "lucide-react"
+import { useConnectedPlatforms } from "@/lib/hooks/use-storage"
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -23,11 +22,7 @@ const PLATFORM_DISPLAY = [
 
 export default function MobileNavigation() {
   const pathname = usePathname()
-  const [platforms, setPlatforms] = useState<ConnectedPlatform[]>([])
-
-  useEffect(() => {
-    setPlatforms(getConnectedPlatforms())
-  }, [])
+  const { platforms, isLoading } = useConnectedPlatforms()
 
   return (
     <div className="h-full bg-card flex flex-col">
@@ -66,25 +61,32 @@ export default function MobileNavigation() {
         {/* Platforms */}
         <div>
           <h3 className="text-xs font-black tracking-widest uppercase text-muted-foreground mb-3">Platforms</h3>
-          <div className="space-y-2">
-            {PLATFORM_DISPLAY.map((p) => {
-              const conn = platforms.find((c) => c.key === p.key)
-              return (
-                <Button
-                  key={p.key}
-                  variant="outline"
-                  className="w-full justify-start gap-2 rounded-xl border-2 border-black font-bold text-sm"
-                  asChild
-                >
-                  <Link href="/">
-                    {p.icon}
-                    <span className="flex-1 text-left">{conn ? conn.username : p.label}</span>
-                    {conn && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
-                  </Link>
-                </Button>
-              )
-            })}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center gap-2 p-3 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm font-medium">Loading...</span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {PLATFORM_DISPLAY.map((p) => {
+                const conn = platforms.find((c) => c.key === p.key)
+                return (
+                  <Button
+                    key={p.key}
+                    variant="outline"
+                    className="w-full justify-start gap-2 rounded-xl border-2 border-black font-bold text-sm"
+                    asChild
+                  >
+                    <Link href="/">
+                      {p.icon}
+                      <span className="flex-1 text-left">{conn ? conn.username : p.label}</span>
+                      {conn && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
+                    </Link>
+                  </Button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,12 +11,11 @@ import { Toaster } from "@/components/ui/toaster"
 import { toast } from "@/components/ui/use-toast"
 import {
   LayoutDashboard, CalendarDays, Repeat2, Lightbulb, ChevronLeft,
-  ChevronRight, Plus, Trash2, Menu, FileText, Mail, Video, Image, BarChart2, BookOpen,
+  ChevronRight, Plus, Trash2, Menu, FileText, Mail, Video, Image, BarChart2, BookOpen, Loader2,
 } from "lucide-react"
 import MobileNavigation from "@/components/mobile-navigation"
-import {
-  getScheduledItems, deleteScheduledItem, type ScheduledItem,
-} from "@/lib/storage"
+import { useScheduledItems, deleteScheduledItem } from "@/lib/hooks/use-storage"
+import type { ScheduledItem } from "@/lib/storage"
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay,
   addMonths, subMonths, getDay, isBefore, startOfDay,
@@ -52,14 +51,11 @@ const TYPE_COLORS: Record<string, string> = {
 export default function CalendarPage() {
   const pathname = usePathname()
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [items, setItems] = useState<ScheduledItem[]>([])
+  const { scheduledItems: items, isLoading } = useScheduledItems()
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [dayItems, setDayItems] = useState<ScheduledItem[]>([])
   const [dayDialogOpen, setDayDialogOpen] = useState(false)
-
-  const reload = useCallback(() => setItems(getScheduledItems()), [])
-
-  useEffect(() => { reload() }, [reload])
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
@@ -68,8 +64,8 @@ export default function CalendarPage() {
   // Leading blank cells so week starts on Sunday
   const leadingBlanks = getDay(monthStart)
 
-  const itemsForDay = (day: Date) =>
-    items.filter((item) => isSameDay(new Date(item.scheduledFor), day))
+  const itemsForDay = useCallback((day: Date) =>
+    items.filter((item) => isSameDay(new Date(item.scheduledFor), day)), [items])
 
   const openDay = (day: Date) => {
     setSelectedDay(day)
@@ -77,14 +73,26 @@ export default function CalendarPage() {
     setDayDialogOpen(true)
   }
 
-  const handleDelete = (id: string) => {
-    deleteScheduledItem(id)
-    reload()
-    setDayItems((prev) => prev.filter((i) => i.id !== id))
-    toast({ title: "Scheduled item removed" })
-  }
+  const handleDelete = useCallback(async (id: string) => {
+    setDeletingId(id)
+    try {
+      await deleteScheduledItem(id)
+      setDayItems((prev) => prev.filter((i) => i.id !== id))
+      toast({ title: "Scheduled item removed" })
+    } catch {
+      toast({ title: "Failed to delete item", variant: "destructive" })
+    } finally {
+      setDeletingId(null)
+    }
+  }, [])
 
   const today = startOfDay(new Date())
+
+  // Count items for this month
+  const monthItemCount = items.filter((item) => {
+    const itemDate = new Date(item.scheduledFor)
+    return itemDate >= monthStart && itemDate <= monthEnd
+  }).length
 
   return (
     <div className="min-h-screen bg-background p-2 sm:p-4 md:p-8 font-sans">
@@ -149,7 +157,7 @@ export default function CalendarPage() {
 
             <div className="mt-auto border-2 border-black rounded-xl p-3 bg-card">
               <p className="text-xs font-bold text-muted-foreground leading-relaxed">
-                {items.length} item{items.length !== 1 ? "s" : ""} scheduled this month.
+                {monthItemCount} item{monthItemCount !== 1 ? "s" : ""} scheduled this month.
               </p>
             </div>
           </aside>
@@ -174,56 +182,65 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 mb-2">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                <div key={d} className="text-center text-xs font-black tracking-widest uppercase text-muted-foreground py-2">
-                  {d}
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+                <p className="font-bold text-muted-foreground">Loading your calendar...</p>
+              </div>
+            ) : (
+              <>
+                {/* Day-of-week headers */}
+                <div className="grid grid-cols-7 mb-2">
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                    <div key={d} className="text-center text-xs font-black tracking-widest uppercase text-muted-foreground py-2">
+                      {d}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7 border-t-2 border-l-2 border-black">
-              {/* Leading blanks */}
-              {Array.from({ length: leadingBlanks }).map((_, i) => (
-                <div key={`blank-${i}`} className="border-b-2 border-r-2 border-black min-h-[80px] bg-muted/30" />
-              ))}
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7 border-t-2 border-l-2 border-black">
+                  {/* Leading blanks */}
+                  {Array.from({ length: leadingBlanks }).map((_, i) => (
+                    <div key={`blank-${i}`} className="border-b-2 border-r-2 border-black min-h-[80px] bg-muted/30" />
+                  ))}
 
-              {days.map((day) => {
-                const dayScheduled = itemsForDay(day)
-                const isPast = isBefore(startOfDay(day), today)
-                const isToday = isSameDay(day, today)
+                  {days.map((day) => {
+                    const dayScheduled = itemsForDay(day)
+                    const isPast = isBefore(startOfDay(day), today)
+                    const isToday = isSameDay(day, today)
 
-                return (
-                  <div
-                    key={day.toISOString()}
-                    onClick={() => openDay(day)}
-                    className={`border-b-2 border-r-2 border-black min-h-[80px] p-1 cursor-pointer transition-colors ${isPast ? "bg-muted/20" : "hover:bg-secondary"} ${isToday ? "bg-yellow-50" : ""}`}
-                  >
-                    <div className={`text-xs font-black mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? "bg-black text-white" : "text-foreground"}`}>
-                      {format(day, "d")}
-                    </div>
-                    <div className="space-y-0.5">
-                      {dayScheduled.slice(0, 3).map((item) => (
-                        <div
-                          key={item.id}
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-0.5 truncate ${TYPE_COLORS[item.type] ?? "bg-secondary text-foreground border-black"}`}
-                        >
-                          {TYPE_ICONS[item.type]}
-                          <span className="truncate">{item.title}</span>
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        onClick={() => openDay(day)}
+                        className={`border-b-2 border-r-2 border-black min-h-[80px] p-1 cursor-pointer transition-colors ${isPast ? "bg-muted/20" : "hover:bg-secondary"} ${isToday ? "bg-yellow-50" : ""}`}
+                      >
+                        <div className={`text-xs font-black mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? "bg-black text-white" : "text-foreground"}`}>
+                          {format(day, "d")}
                         </div>
-                      ))}
-                      {dayScheduled.length > 3 && (
-                        <div className="text-[10px] font-bold text-muted-foreground px-1">
-                          +{dayScheduled.length - 3} more
+                        <div className="space-y-0.5">
+                          {dayScheduled.slice(0, 3).map((item) => (
+                            <div
+                              key={item.id}
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-0.5 truncate ${TYPE_COLORS[item.type] ?? "bg-secondary text-foreground border-black"}`}
+                            >
+                              {TYPE_ICONS[item.type]}
+                              <span className="truncate">{item.title}</span>
+                            </div>
+                          ))}
+                          {dayScheduled.length > 3 && (
+                            <div className="text-[10px] font-bold text-muted-foreground px-1">
+                              +{dayScheduled.length - 3} more
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </main>
         </div>
       </div>
@@ -266,9 +283,14 @@ export default function CalendarPage() {
                     size="icon"
                     className="border-2 border-black rounded-lg h-8 w-8 shrink-0 hover:bg-destructive hover:text-white hover:border-destructive transition-colors"
                     onClick={() => handleDelete(item.id)}
+                    disabled={deletingId === item.id}
                     aria-label="Delete scheduled item"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    {deletingId === item.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
                   </Button>
                 </div>
               ))}
