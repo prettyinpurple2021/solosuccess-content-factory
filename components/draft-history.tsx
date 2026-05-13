@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, type MouseEvent } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { useDraftsByType, deleteDraft, type Draft } from "@/lib/hooks/use-storage"
+import { useDraftsByType, deleteDraft } from "@/lib/hooks/use-storage"
 import type { Draft as DraftType } from "@/lib/storage"
 import { toast } from "sonner"
 import { History, Trash2, RotateCcw, FileText, Loader2 } from "lucide-react"
@@ -38,7 +38,7 @@ export default function DraftHistory({ currentType, onRestore }: DraftHistoryPro
     toast.success("Draft restored!", { description: `Loaded ${draft.type} from ${formatDistanceToNow(new Date(draft.savedAt), { addSuffix: true })}` })
   }
 
-  const handleDelete = useCallback(async (id: string, e: React.MouseEvent) => {
+  const handleDelete = useCallback(async (id: string, e: MouseEvent) => {
     e.stopPropagation()
     setDeletingId(id)
     try {

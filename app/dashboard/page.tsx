@@ -115,13 +115,13 @@ export default function Dashboard() {
         description: username ? `Connected as ${username}` : undefined,
       })
       // Reload platforms
-      const supabase = createClient()
-      supabase.auth.getUser().then(({ data: { user } }) => {
+      void (async () => {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
-        supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id).then(({ data }) => {
-          setPlatforms(data ?? [])
-        })
-      })
+        const { data } = await supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id)
+        setPlatforms(data ?? [])
+      })()
       // Clean up URL
       router.replace("/dashboard")
     }
