@@ -116,10 +116,11 @@ export default function Dashboard() {
       })
       // Reload platforms
       const supabase = createClient()
-      supabase.auth.getUser().then(({ data: { user } }) => {
+      supabase.auth.getUser().then((result: { data: { user: { id: string } | null }; error: unknown }) => {
+        const user = result.data.user
         if (!user) return
-        supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id).then(({ data }) => {
-          setPlatforms(data ?? [])
+        supabase.from("connected_platforms").select("platform_key, username").eq("user_id", user.id).then((q: { data: { platform_key: string; username: string }[] | null; error: unknown }) => {
+          setPlatforms(q.data ?? [])
         })
       })
       // Clean up URL
