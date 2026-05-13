@@ -1,8 +1,7 @@
 "use client"
 
-import { useMemo } from "react"
 import { Card } from "@/components/ui/card"
-import { getDrafts, getScheduledItems } from "@/lib/storage"
+import { useDrafts, useScheduledItems } from "@/lib/hooks/use-storage"
 import {
   BarChart,
   Bar,
@@ -12,7 +11,8 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts"
-import { FileText, CalendarCheck, Zap, TrendingUp } from "lucide-react"
+import { FileText, CalendarCheck, Zap, TrendingUp, Loader2 } from "lucide-react"
+import { useMemo } from "react"
 
 const TYPE_COLORS: Record<string, string> = {
   post: "#f59e0b",
@@ -27,10 +27,12 @@ const TYPE_COLORS: Record<string, string> = {
 const CONTENT_TYPES = ["post", "thread", "newsletter", "video", "story", "survey", "blog"]
 
 export default function ContentAnalytics() {
-  const stats = useMemo(() => {
-    const drafts = getDrafts()
-    const scheduled = getScheduledItems()
+  const { drafts, isLoading: draftsLoading } = useDrafts()
+  const { scheduledItems, isLoading: scheduledLoading } = useScheduledItems()
 
+  const isLoading = draftsLoading || scheduledLoading
+
+  const stats = useMemo(() => {
     const byType = CONTENT_TYPES.map((type) => ({
       type: type.charAt(0).toUpperCase() + type.slice(1),
       count: drafts.filter((d) => d.type === type).length,
@@ -57,12 +59,12 @@ export default function ContentAnalytics() {
 
     return {
       total: drafts.length,
-      scheduled: scheduled.length,
+      scheduled: scheduledItems.length,
       recentDrafts,
       streak,
       byType,
     }
-  }, [])
+  }, [drafts, scheduledItems])
 
   const statCards = [
     {
@@ -90,6 +92,20 @@ export default function ContentAnalytics() {
       color: "bg-blue-400",
     },
   ]
+
+  if (isLoading) {
+    return (
+      <section aria-labelledby="analytics-heading">
+        <h2 id="analytics-heading" className="text-xl sm:text-2xl font-black mb-4 tracking-tight">
+          YOUR STATS
+        </h2>
+        <Card className="border-4 border-black rounded-xl p-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="font-bold text-muted-foreground text-sm">Loading your stats...</p>
+        </Card>
+      </section>
+    )
+  }
 
   return (
     <section aria-labelledby="analytics-heading">

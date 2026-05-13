@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -13,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Upload,
-  Save,
   Download,
   Crop,
   Move,
@@ -26,21 +24,27 @@ import {
   Sparkles,
   MessageSquare,
   Loader2,
+  Copy,
 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function ImageStudioPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("")
   const [aiResponse, setAiResponse] = useState("")
   const [activeFilter, setActiveFilter] = useState("none")
+  const [style, setStyle] = useState("realistic")
+  const [aspectRatio, setAspectRatio] = useState("square")
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setImageFile(file)
+      setGeneratedImageUrl(null)
 
       // Create preview URL
       const reader = new FileReader()
@@ -55,7 +59,8 @@ export default function ImageStudioPage() {
 
   // Apply filter effect to canvas when filter changes
   useEffect(() => {
-    if (!imagePreview || !canvasRef.current) return
+    const currentImage = generatedImageUrl || imagePreview
+    if (!currentImage || !canvasRef.current) return
 
     const canvas = canvasRef.current
     const ctx = canvas.getContext("2d")
@@ -117,39 +122,82 @@ export default function ImageStudioPage() {
           break
       }
     }
-    img.src = imagePreview
-  }, [imagePreview, activeFilter])
+    img.src = currentImage
+  }, [imagePreview, generatedImageUrl, activeFilter])
 
-  const handleAIProcess = () => {
-    if (!aiPrompt.trim()) return
-
-    setIsProcessing(true)
-
-    // Simulate AI processing
-    setTimeout(() => {
-      setAiResponse(
-        "I've analyzed your image and made the following adjustments: enhanced colors, removed background distractions, and improved overall clarity. I've also applied a subtle vignette effect to draw focus to the main subject.",
-      )
-      setIsProcessing(false)
-    }, 2000)
-  }
-
-  const handleAIGenerate = () => {
-    if (!aiPrompt.trim()) return
+  const handleAIGenerate = useCallback(async () => {
+    if (!aiPrompt.trim()) {
+      toast.error("Please enter a description")
+      return
+    }
 
     setIsProcessing(true)
+    setAiResponse("")
 
-    // Simulate AI processing
-    setTimeout(() => {
-      setAiResponse(
-        "I've generated a new image based on your prompt. The image features the elements you described with a cohesive style and composition. You can now edit this image further using the tools in the Image Studio.",
-      )
+    try {
+      const response = await fetch("/api/studio/image/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt, style, aspectRatio }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Generation failed")
+      }
+
+      const data = await response.json()
+      setGeneratedImageUrl(data.imageUrl)
+      setImagePreview(null)
+      setImageFile(null)
+      setAiResponse("Image generated successfully! You can now apply filters or download it.")
+      toast.success("Image generated")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate image"
+      setAiResponse(`Error: ${message}`)
+      toast.error(message)
+    } finally {
       setIsProcessing(false)
+    }
+  }, [aiPrompt, style, aspectRatio])
 
-      // Here we would normally set the generated image, but for this demo we'll just use a placeholder
-      // In a real implementation, this would be the result from an image generation API
-    }, 2000)
-  }
+  const handleDownload = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) {
+      toast.error("No image to download")
+      return
+    }
+
+    const link = document.createElement("a")
+    link.download = "image-studio-export.png"
+    link.href = canvas.toDataURL("image/png")
+    link.click()
+    toast.success("Image downloaded")
+  }, [])
+
+  const handleCopyToClipboard = useCallback(async () => {
+    const canvas = canvasRef.current
+    if (!canvas) {
+      toast.error("No image to copy")
+      return
+    }
+
+    try {
+      const blob = await new Promise<Blob | null>((resolve) => 
+        canvas.toBlob(resolve, "image/png")
+      )
+      if (blob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob })
+        ])
+        toast.success("Image copied to clipboard")
+      }
+    } catch {
+      toast.error("Failed to copy image")
+    }
+  }, [])
+
+  const currentImage = generatedImageUrl || imagePreview
 
   return (
     <div>
@@ -159,7 +207,7 @@ export default function ImageStudioPage() {
         <div className="space-y-6">
           {/* Image upload/generation section */}
           <Card className="border-4 border-black rounded-xl p-4 sm:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <Tabs defaultValue="upload">
+            <Tabs defaultValue="generate">
               <TabsList className="bg-white/50 border-2 border-black rounded-xl p-1 mb-4 w-full">
                 <TabsTrigger
                   value="upload"
@@ -202,24 +250,38 @@ export default function ImageStudioPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <Button variant="outline" className="border-2 border-black rounded-xl font-bold">
-                    <ImageIcon className="h-4 w-4 mr-2" /> Stock Images
-                  </Button>
-                  <Button variant="outline" className="border-2 border-black rounded-xl font-bold">
-                    <Crop className="h-4 w-4 mr-2" /> Crop
-                  </Button>
-                  <Button variant="outline" className="border-2 border-black rounded-xl font-bold">
-                    <RotateCcw className="h-4 w-4 mr-2" /> Rotate
-                  </Button>
-                  <Button variant="outline" className="border-2 border-black rounded-xl font-bold">
-                    <Sparkles className="h-4 w-4 mr-2" /> Enhance
-                  </Button>
-                </div>
+                {imagePreview && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <Button 
+                      variant="outline" 
+                      className="border-2 border-black rounded-xl font-bold"
+                      onClick={() => {
+                        setImagePreview(null)
+                        setImageFile(null)
+                      }}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" /> Clear
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-2 border-black rounded-xl font-bold"
+                      onClick={handleDownload}
+                    >
+                      <Download className="h-4 w-4 mr-2" /> Download
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="generate">
                 <h3 className="text-xl font-bold mb-4">AI Image Generation</h3>
+                
+                {generatedImageUrl && (
+                  <div className="border-4 border-black rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center mb-4">
+                    <canvas ref={canvasRef} className="max-w-full max-h-[300px] sm:max-h-[400px] object-contain" />
+                  </div>
+                )}
+                
                 <div className="space-y-4">
                   <div>
                     <Label className="font-bold mb-2 block">Describe the image you want to create</Label>
@@ -234,7 +296,7 @@ export default function ImageStudioPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="font-bold mb-2 block">Style</Label>
-                      <Select defaultValue="realistic">
+                      <Select value={style} onValueChange={setStyle}>
                         <SelectTrigger className="border-2 border-black rounded-xl">
                           <SelectValue placeholder="Select style" />
                         </SelectTrigger>
@@ -250,21 +312,39 @@ export default function ImageStudioPage() {
 
                     <div>
                       <Label className="font-bold mb-2 block">Aspect Ratio</Label>
-                      <Select defaultValue="square">
+                      <Select value={aspectRatio} onValueChange={setAspectRatio}>
                         <SelectTrigger className="border-2 border-black rounded-xl">
                           <SelectValue placeholder="Select ratio" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="square">1:1 (Square)</SelectItem>
-                          <SelectItem value="portrait">4:5 (Portrait)</SelectItem>
+                          <SelectItem value="portrait">4:3 (Portrait)</SelectItem>
                           <SelectItem value="landscape">16:9 (Landscape)</SelectItem>
-                          <SelectItem value="wide">21:9 (Widescreen)</SelectItem>
+                          <SelectItem value="wide">21:9 (Wide)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    {generatedImageUrl && (
+                      <>
+                        <Button
+                          variant="outline"
+                          className="border-2 border-black rounded-xl font-bold"
+                          onClick={handleCopyToClipboard}
+                        >
+                          <Copy className="h-4 w-4 mr-2" /> Copy
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-2 border-black rounded-xl font-bold"
+                          onClick={handleDownload}
+                        >
+                          <Download className="h-4 w-4 mr-2" /> Download
+                        </Button>
+                      </>
+                    )}
                     <Button
                       className="bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold"
                       onClick={handleAIGenerate}
@@ -287,7 +367,7 @@ export default function ImageStudioPage() {
           </Card>
 
           {/* Quick tools */}
-          {imagePreview && (
+          {currentImage && (
             <Card className="border-4 border-black rounded-xl p-4 sm:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <h3 className="text-xl font-bold mb-4">Quick Tools</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -319,55 +399,18 @@ export default function ImageStudioPage() {
             </Card>
           )}
 
-          {/* AI Image Processing */}
-          <Card className="border-4 border-black rounded-xl p-4 sm:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5" />
-              <h3 className="text-xl font-bold">AI Image Assistant</h3>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="font-bold mb-2 block">What would you like to do with your image?</Label>
-                <Textarea
-                  placeholder="E.g., Remove the background, enhance colors, make it look more professional..."
-                  className="min-h-[80px] border-2 border-black rounded-xl"
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  className="bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold"
-                  onClick={handleAIProcess}
-                  disabled={isProcessing || !aiPrompt.trim()}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" /> Process with AI
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {aiResponse && (
-                <div className="mt-4 p-4 bg-white/50 border-2 border-black rounded-xl">
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="h-5 w-5 mt-0.5" />
-                    <div>
-                      <p className="font-bold mb-1">AI Assistant</p>
-                      <p>{aiResponse}</p>
-                    </div>
-                  </div>
+          {/* AI Response */}
+          {aiResponse && (
+            <Card className="border-4 border-black rounded-xl p-4 sm:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="flex items-start gap-3">
+                <MessageSquare className="h-5 w-5 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-bold mb-1">AI Assistant</p>
+                  <p>{aiResponse}</p>
                 </div>
-              )}
-            </div>
-          </Card>
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Controls panel */}
@@ -377,7 +420,7 @@ export default function ImageStudioPage() {
               <h3 className="text-xl font-bold">Image Controls</h3>
             </div>
             <div className="p-4 bg-white">
-              <Tabs defaultValue="adjust">
+              <Tabs defaultValue="filters">
                 <TabsList className="bg-white/50 border-2 border-black rounded-xl p-1 mb-4 w-full">
                   <TabsTrigger
                     value="adjust"
@@ -390,12 +433,6 @@ export default function ImageStudioPage() {
                     className="rounded-lg data-[state=active]:bg-black data-[state=active]:text-white font-bold"
                   >
                     Filters
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="resize"
-                    className="rounded-lg data-[state=active]:bg-black data-[state=active]:text-white font-bold"
-                  >
-                    Resize
                   </TabsTrigger>
                 </TabsList>
 
@@ -433,8 +470,6 @@ export default function ImageStudioPage() {
                         <SelectItem value="grayscale">Grayscale</SelectItem>
                         <SelectItem value="sepia">Sepia</SelectItem>
                         <SelectItem value="invert">Invert</SelectItem>
-                        <SelectItem value="vintage">Vintage</SelectItem>
-                        <SelectItem value="hdr">HDR</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -449,29 +484,6 @@ export default function ImageStudioPage() {
                     <Switch />
                   </div>
                 </TabsContent>
-
-                <TabsContent value="resize" className="space-y-4">
-                  <div>
-                    <Label className="font-bold mb-2 block">Width</Label>
-                    <div className="flex items-center gap-2">
-                      <Slider defaultValue={[100]} max={200} step={1} className="flex-1 py-4" />
-                      <span className="min-w-[40px] text-right">100%</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="font-bold mb-2 block">Height</Label>
-                    <div className="flex items-center gap-2">
-                      <Slider defaultValue={[100]} max={200} step={1} className="flex-1 py-4" />
-                      <span className="min-w-[40px] text-right">100%</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label className="font-bold">Lock Aspect Ratio</Label>
-                    <Switch defaultChecked />
-                  </div>
-                </TabsContent>
               </Tabs>
             </div>
           </Card>
@@ -481,42 +493,21 @@ export default function ImageStudioPage() {
               <h3 className="text-xl font-bold">Export Options</h3>
             </div>
             <div className="p-4 bg-white space-y-4">
-              <div>
-                <Label className="font-bold mb-2 block">File Format</Label>
-                <Select defaultValue="png">
-                  <SelectTrigger className="border-2 border-black rounded-xl">
-                    <SelectValue placeholder="Select format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="png">PNG</SelectItem>
-                    <SelectItem value="jpg">JPG</SelectItem>
-                    <SelectItem value="webp">WebP</SelectItem>
-                    <SelectItem value="svg">SVG</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="font-bold mb-2 block">Quality</Label>
-                <Select defaultValue="high">
-                  <SelectTrigger className="border-2 border-black rounded-xl">
-                    <SelectValue placeholder="Select quality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="max">Maximum</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="pt-2 space-y-3">
-                <Button className="w-full bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold">
-                  <Save className="h-4 w-4 mr-2" /> Save Project
+                <Button 
+                  className="w-full bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold"
+                  onClick={handleDownload}
+                  disabled={!currentImage}
+                >
+                  <Download className="h-4 w-4 mr-2" /> Download PNG
                 </Button>
-                <Button variant="outline" className="w-full border-2 border-black rounded-xl font-bold">
-                  <Download className="h-4 w-4 mr-2" /> Export Image
+                <Button 
+                  variant="outline" 
+                  className="w-full border-2 border-black rounded-xl font-bold"
+                  onClick={handleCopyToClipboard}
+                  disabled={!currentImage}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copy to Clipboard
                 </Button>
               </div>
             </div>
@@ -526,4 +517,3 @@ export default function ImageStudioPage() {
     </div>
   )
 }
-

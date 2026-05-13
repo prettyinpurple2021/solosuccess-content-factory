@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Save, Download, Wand2, Sparkles, MessageSquare, Loader2, Check, Copy, RotateCcw } from "lucide-react"
+import { toast } from "sonner"
 
 export default function TextStudioPage() {
   const [textContent, setTextContent] = useState("")
@@ -19,18 +19,21 @@ export default function TextStudioPage() {
   const [aiResponse, setAiResponse] = useState("")
   const [generationPrompt, setGenerationPrompt] = useState("")
   const [generatedText, setGeneratedText] = useState("")
+  const [tone, setTone] = useState("professional")
+  const [length, setLength] = useState("medium")
   const [textStats, setTextStats] = useState({
     words: 0,
     characters: 0,
     sentences: 0,
     readingTime: "0 min",
   })
+  const [textHistory, setTextHistory] = useState<string[]>([])
 
   const updateTextStats = (text: string) => {
     const words = text.trim().split(/\s+/).filter(Boolean).length
     const characters = text.length
     const sentences = text.split(/[.!?]+/).filter(Boolean).length
-    const readingTime = Math.ceil(words / 200) // Assuming 200 words per minute reading speed
+    const readingTime = Math.ceil(words / 200)
 
     setTextStats({
       words,
@@ -46,48 +49,182 @@ export default function TextStudioPage() {
     updateTextStats(newText)
   }
 
-  const handleAIProcess = () => {
+  const handleUndo = () => {
+    if (textHistory.length > 0) {
+      const previous = textHistory[textHistory.length - 1]
+      setTextHistory((prev) => prev.slice(0, -1))
+      setTextContent(previous)
+      updateTextStats(previous)
+    }
+  }
+
+  const saveToHistory = useCallback((text: string) => {
+    setTextHistory((prev) => [...prev.slice(-9), text])
+  }, [])
+
+  const handleAIProcess = useCallback(async () => {
     if (!aiPrompt.trim() || !textContent.trim()) return
 
     setIsProcessing(true)
+    saveToHistory(textContent)
 
-    // Simulate AI processing
-    setTimeout(() => {
-      setAiResponse(
-        "I've analyzed your text and made the following improvements: fixed grammar issues, improved sentence structure, and enhanced overall readability. The tone is now more professional and engaging.",
-      )
+    try {
+      const response = await fetch("/api/studio/text/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textContent, instruction: aiPrompt }),
+      })
 
-      // In a real implementation, this would be the result from an LLM
-      setTextContent(textContent) // Here we'd update with the improved text
-      updateTextStats(textContent)
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Processing failed")
+      }
 
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error("No response body")
+
+      let improvedText = ""
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        const chunk = decoder.decode(value, { stream: true })
+        // Parse the streaming response (AI SDK format)
+        const lines = chunk.split("\n").filter(Boolean)
+        for (const line of lines) {
+          if (line.startsWith("0:")) {
+            try {
+              const text = JSON.parse(line.slice(2))
+              improvedText += text
+            } catch {
+              // Skip non-JSON lines
+            }
+          }
+        }
+      }
+
+      setTextContent(improvedText)
+      updateTextStats(improvedText)
+      setAiResponse(`Text improved based on your instruction: "${aiPrompt}"`)
+      toast.success("Text processed successfully")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to process text"
+      setAiResponse(`Error: ${message}`)
+      toast.error(message)
+    } finally {
       setIsProcessing(false)
-    }, 2000)
-  }
+    }
+  }, [aiPrompt, textContent, saveToHistory])
 
-  const handleAIGenerate = () => {
+  const handleAIGenerate = useCallback(async () => {
     if (!generationPrompt.trim()) return
 
     setIsProcessing(true)
 
-    // Simulate AI processing
-    setTimeout(() => {
-      const generatedContent =
-        "This is a sample of AI-generated text based on your prompt. In a real implementation, this would be content created by a language model that follows your specific instructions and requirements. The text would be tailored to your desired tone, style, and purpose."
+    try {
+      const response = await fetch("/api/studio/text/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: generationPrompt, tone, length }),
+      })
 
-      setGeneratedText(generatedContent)
-      updateTextStats(generatedContent)
-      setAiResponse(
-        "I've generated text based on your prompt. The content follows your specified parameters and is ready for further editing or refinement.",
-      )
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Generation failed")
+      }
 
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error("No response body")
+
+      let generated = ""
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split("\n").filter(Boolean)
+        for (const line of lines) {
+          if (line.startsWith("0:")) {
+            try {
+              const text = JSON.parse(line.slice(2))
+              generated += text
+              setGeneratedText(generated)
+              updateTextStats(generated)
+            } catch {
+              // Skip non-JSON lines
+            }
+          }
+        }
+      }
+
+      setAiResponse("Text generated successfully! You can copy it or continue editing.")
+      toast.success("Text generated")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate text"
+      setAiResponse(`Error: ${message}`)
+      toast.error(message)
+    } finally {
       setIsProcessing(false)
-    }, 2000)
-  }
+    }
+  }, [generationPrompt, tone, length])
 
-  const handleCopyText = () => {
-    navigator.clipboard.writeText(textContent || generatedText)
-  }
+  const handleCopyText = useCallback(() => {
+    const textToCopy = textContent || generatedText
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy)
+      toast.success("Copied to clipboard")
+    }
+  }, [textContent, generatedText])
+
+  const handleEnhance = useCallback(async () => {
+    if (!textContent.trim()) {
+      toast.error("Enter some text first")
+      return
+    }
+    setAiPrompt("Improve clarity, fix grammar, and enhance readability while maintaining the original tone and meaning")
+    // Trigger processing with the enhancement prompt
+    setTimeout(() => {
+      const processButton = document.querySelector('[data-process-button]') as HTMLButtonElement
+      processButton?.click()
+    }, 100)
+  }, [textContent])
+
+  const handleExport = useCallback((format: string) => {
+    const textToExport = textContent || generatedText
+    if (!textToExport) {
+      toast.error("No text to export")
+      return
+    }
+
+    let blob: Blob
+    let filename: string
+
+    switch (format) {
+      case "txt":
+        blob = new Blob([textToExport], { type: "text/plain" })
+        filename = "content.txt"
+        break
+      case "md":
+        blob = new Blob([textToExport], { type: "text/markdown" })
+        filename = "content.md"
+        break
+      default:
+        blob = new Blob([textToExport], { type: "text/plain" })
+        filename = "content.txt"
+    }
+
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`Exported as ${filename}`)
+  }, [textContent, generatedText])
 
   return (
     <div>
@@ -118,7 +255,7 @@ export default function TextStudioPage() {
                   <h3 className="text-xl font-bold">Text Editor</h3>
                   <div className="flex items-center gap-2 text-sm">
                     <span>Words: {textStats.words}</span>
-                    <span>•</span>
+                    <span>-</span>
                     <span>Reading time: {textStats.readingTime}</span>
                   </div>
                 </div>
@@ -131,10 +268,12 @@ export default function TextStudioPage() {
                 />
 
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" className="border-2 border-black rounded-xl font-bold">
-                    <Check className="h-4 w-4 mr-2" /> Spell Check
-                  </Button>
-                  <Button variant="outline" className="border-2 border-black rounded-xl font-bold">
+                  <Button 
+                    variant="outline" 
+                    className="border-2 border-black rounded-xl font-bold"
+                    onClick={handleUndo}
+                    disabled={textHistory.length === 0}
+                  >
                     <RotateCcw className="h-4 w-4 mr-2" /> Undo
                   </Button>
                   <Button
@@ -144,7 +283,12 @@ export default function TextStudioPage() {
                   >
                     <Copy className="h-4 w-4 mr-2" /> Copy
                   </Button>
-                  <Button variant="outline" className="border-2 border-black rounded-xl font-bold">
+                  <Button 
+                    variant="outline" 
+                    className="border-2 border-black rounded-xl font-bold"
+                    onClick={handleEnhance}
+                    disabled={isProcessing || !textContent.trim()}
+                  >
                     <Sparkles className="h-4 w-4 mr-2" /> Enhance
                   </Button>
                 </div>
@@ -166,7 +310,7 @@ export default function TextStudioPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="font-bold mb-2 block">Tone</Label>
-                      <Select defaultValue="professional">
+                      <Select value={tone} onValueChange={setTone}>
                         <SelectTrigger className="border-2 border-black rounded-xl">
                           <SelectValue placeholder="Select tone" />
                         </SelectTrigger>
@@ -182,15 +326,14 @@ export default function TextStudioPage() {
 
                     <div>
                       <Label className="font-bold mb-2 block">Length</Label>
-                      <Select defaultValue="medium">
+                      <Select value={length} onValueChange={setLength}>
                         <SelectTrigger className="border-2 border-black rounded-xl">
                           <SelectValue placeholder="Select length" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="short">Short (100 words)</SelectItem>
-                          <SelectItem value="medium">Medium (300 words)</SelectItem>
-                          <SelectItem value="long">Long (500 words)</SelectItem>
-                          <SelectItem value="custom">Custom</SelectItem>
+                          <SelectItem value="short">Short (~100 words)</SelectItem>
+                          <SelectItem value="medium">Medium (~300 words)</SelectItem>
+                          <SelectItem value="long">Long (~500 words)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -220,14 +363,24 @@ export default function TextStudioPage() {
                         <h4 className="font-bold">Generated Text</h4>
                         <div className="flex items-center gap-2 text-sm">
                           <span>Words: {textStats.words}</span>
-                          <span>•</span>
+                          <span>-</span>
                           <span>Reading time: {textStats.readingTime}</span>
                         </div>
                       </div>
-                      <div className="border-2 border-black rounded-xl p-4 bg-white/50">
-                        <p>{generatedText}</p>
+                      <div className="border-2 border-black rounded-xl p-4 bg-white/50 whitespace-pre-wrap">
+                        {generatedText}
                       </div>
-                      <div className="flex justify-end mt-2">
+                      <div className="flex justify-end mt-2 gap-2">
+                        <Button
+                          variant="outline"
+                          className="border-2 border-black rounded-xl font-bold"
+                          onClick={() => {
+                            setTextContent(generatedText)
+                            toast.success("Moved to editor")
+                          }}
+                        >
+                          <Check className="h-4 w-4 mr-2" /> Use in Editor
+                        </Button>
                         <Button
                           variant="outline"
                           className="border-2 border-black rounded-xl font-bold"
@@ -263,6 +416,7 @@ export default function TextStudioPage() {
 
               <div className="flex justify-end">
                 <Button
+                  data-process-button
                   className="bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold"
                   onClick={handleAIProcess}
                   disabled={isProcessing || !aiPrompt.trim() || !textContent.trim()}
@@ -282,7 +436,7 @@ export default function TextStudioPage() {
               {aiResponse && (
                 <div className="mt-4 p-4 bg-white/50 border-2 border-black rounded-xl">
                   <div className="flex items-start gap-3">
-                    <MessageSquare className="h-5 w-5 mt-0.5" />
+                    <MessageSquare className="h-5 w-5 mt-0.5 shrink-0" />
                     <div>
                       <p className="font-bold mb-1">AI Assistant</p>
                       <p>{aiResponse}</p>
@@ -387,7 +541,12 @@ export default function TextStudioPage() {
                   <div className="pt-4 border-t border-gray-200">
                     <Label className="font-bold mb-2 block">Readability</Label>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 w-[70%]"></div>
+                      <div 
+                        className="h-full bg-green-500 transition-all" 
+                        style={{ 
+                          width: `${Math.min(100, Math.max(20, 100 - (textStats.words > 0 ? (textStats.characters / textStats.words - 4) * 10 : 0)))}%` 
+                        }}
+                      />
                     </div>
                     <div className="flex justify-between mt-1 text-sm">
                       <span>Easy</span>
@@ -395,10 +554,6 @@ export default function TextStudioPage() {
                       <span>Complex</span>
                     </div>
                   </div>
-
-                  <Button variant="outline" className="w-full border-2 border-black rounded-xl font-bold mt-4">
-                    <Sparkles className="h-4 w-4 mr-2" /> Detailed Analysis
-                  </Button>
                 </TabsContent>
               </Tabs>
             </div>
@@ -409,27 +564,20 @@ export default function TextStudioPage() {
               <h3 className="text-xl font-bold">Export Options</h3>
             </div>
             <div className="p-4 bg-white space-y-4">
-              <div>
-                <Label className="font-bold mb-2 block">File Format</Label>
-                <Select defaultValue="txt">
-                  <SelectTrigger className="border-2 border-black rounded-xl">
-                    <SelectValue placeholder="Select format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="txt">Plain Text (.txt)</SelectItem>
-                    <SelectItem value="docx">Word Document (.docx)</SelectItem>
-                    <SelectItem value="pdf">PDF Document (.pdf)</SelectItem>
-                    <SelectItem value="md">Markdown (.md)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="pt-2 space-y-3">
-                <Button className="w-full bg-black hover:bg-black/80 text-white rounded-xl border-2 border-black font-bold">
-                  <Save className="h-4 w-4 mr-2" /> Save Project
+                <Button 
+                  variant="outline" 
+                  className="w-full border-2 border-black rounded-xl font-bold"
+                  onClick={() => handleExport("txt")}
+                >
+                  <Download className="h-4 w-4 mr-2" /> Export as .txt
                 </Button>
-                <Button variant="outline" className="w-full border-2 border-black rounded-xl font-bold">
-                  <Download className="h-4 w-4 mr-2" /> Export Text
+                <Button 
+                  variant="outline" 
+                  className="w-full border-2 border-black rounded-xl font-bold"
+                  onClick={() => handleExport("md")}
+                >
+                  <Download className="h-4 w-4 mr-2" /> Export as .md
                 </Button>
                 <Button
                   variant="outline"
@@ -446,4 +594,3 @@ export default function TextStudioPage() {
     </div>
   )
 }
-

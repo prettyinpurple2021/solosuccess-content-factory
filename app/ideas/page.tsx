@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,10 +15,11 @@ import { Toaster } from "@/components/ui/toaster"
 import { toast } from "@/components/ui/use-toast"
 import {
   LayoutDashboard, CalendarDays, Repeat2, Lightbulb, Menu, Plus,
-  Trash2, Pin, PinOff, Search, ExternalLink, Download,
+  Trash2, Pin, PinOff, Search, ExternalLink, Download, Loader2,
 } from "lucide-react"
 import MobileNavigation from "@/components/mobile-navigation"
-import { getIdeas, saveIdea, deleteIdea, pinIdea, type Idea } from "@/lib/storage"
+import { useIdeas, saveIdea, deleteIdea, pinIdea } from "@/lib/hooks/use-storage"
+import type { Idea } from "@/lib/storage"
 import { format } from "date-fns"
 
 const NAV_ITEMS = [
@@ -32,10 +33,11 @@ const SUGGESTED_TAGS = ["content", "strategy", "marketing", "product", "growth",
 
 export default function IdeasPage() {
   const pathname = usePathname()
-  const [ideas, setIdeas] = useState<Idea[]>([])
+  const { ideas, isLoading } = useIdeas()
   const [search, setSearch] = useState("")
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   // Form state
   const [newTitle, setNewTitle] = useState("")
@@ -43,9 +45,6 @@ export default function IdeasPage() {
   const [newSourceUrl, setNewSourceUrl] = useState("")
   const [newTags, setNewTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState("")
-
-  const reload = useCallback(() => setIdeas(getIdeas()), [])
-  useEffect(() => { reload() }, [reload])
 
   const filtered = ideas.filter((idea) => {
     const matchSearch =
@@ -69,25 +68,37 @@ export default function IdeasPage() {
     }
   }
 
-  const handleSave = () => {
+  const handleSave = useCallback(async () => {
     if (!newTitle.trim()) { toast({ title: "Add a title for your idea.", variant: "destructive" }); return }
-    saveIdea({ title: newTitle.trim(), body: newBody.trim(), tags: newTags, sourceUrl: newSourceUrl.trim() || undefined, pinned: false })
-    reload()
-    toast({ title: "Idea saved to your Swipe File" })
-    setNewTitle(""); setNewBody(""); setNewSourceUrl(""); setNewTags([]); setTagInput("")
-    setAddOpen(false)
-  }
+    setSaving(true)
+    try {
+      await saveIdea({ title: newTitle.trim(), body: newBody.trim(), tags: newTags, sourceUrl: newSourceUrl.trim() || undefined, pinned: false })
+      toast({ title: "Idea saved to your Swipe File" })
+      setNewTitle(""); setNewBody(""); setNewSourceUrl(""); setNewTags([]); setTagInput("")
+      setAddOpen(false)
+    } catch {
+      toast({ title: "Failed to save idea", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
+  }, [newTitle, newBody, newTags, newSourceUrl])
 
-  const handleDelete = (id: string) => {
-    deleteIdea(id)
-    reload()
-    toast({ title: "Idea removed" })
-  }
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await deleteIdea(id)
+      toast({ title: "Idea removed" })
+    } catch {
+      toast({ title: "Failed to delete idea", variant: "destructive" })
+    }
+  }, [])
 
-  const handlePin = (id: string, pinned: boolean) => {
-    pinIdea(id, !pinned)
-    reload()
-  }
+  const handlePin = useCallback(async (id: string, currentPinned: boolean) => {
+    try {
+      await pinIdea(id, !currentPinned)
+    } catch {
+      toast({ title: "Failed to update pin status", variant: "destructive" })
+    }
+  }, [])
 
   const handleExport = () => {
     const text = ideas
@@ -213,7 +224,12 @@ export default function IdeasPage() {
               ))}
             </div>
 
-            {ideas.length === 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+                <p className="font-bold text-muted-foreground">Loading your ideas...</p>
+              </div>
+            ) : ideas.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
                 <Lightbulb className="h-14 w-14 opacity-20" />
                 <p className="font-black text-lg">Your Swipe File is empty.</p>
@@ -294,8 +310,10 @@ export default function IdeasPage() {
               )}
             </div>
             <div className="flex gap-3 pt-2">
-              <Button variant="outline" className="flex-1 border-2 border-black rounded-xl font-bold" onClick={() => setAddOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave} className="flex-1 bg-black text-white border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">Save Idea</Button>
+              <Button variant="outline" className="flex-1 border-2 border-black rounded-xl font-bold" onClick={() => setAddOpen(false)} disabled={saving}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving} className="flex-1 bg-black text-white border-2 border-black rounded-xl font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Save Idea"}
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -305,6 +323,14 @@ export default function IdeasPage() {
 }
 
 function IdeaCard({ idea, onDelete, onPin }: { idea: Idea; onDelete: (id: string) => void; onPin: (id: string, pinned: boolean) => void }) {
+  const [deleting, setDeleting] = useState(false)
+  
+  const handleDelete = async () => {
+    setDeleting(true)
+    await onDelete(idea.id)
+    setDeleting(false)
+  }
+
   return (
     <Card className="border-4 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
@@ -313,8 +339,8 @@ function IdeaCard({ idea, onDelete, onPin }: { idea: Idea; onDelete: (id: string
           <Button variant="outline" size="icon" onClick={() => onPin(idea.id, idea.pinned)} className="border-2 border-black rounded-lg h-7 w-7" aria-label={idea.pinned ? "Unpin" : "Pin"}>
             {idea.pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
           </Button>
-          <Button variant="outline" size="icon" onClick={() => onDelete(idea.id)} className="border-2 border-black rounded-lg h-7 w-7 hover:bg-destructive hover:text-white hover:border-destructive transition-colors" aria-label="Delete idea">
-            <Trash2 className="h-3 w-3" />
+          <Button variant="outline" size="icon" onClick={handleDelete} disabled={deleting} className="border-2 border-black rounded-lg h-7 w-7 hover:bg-destructive hover:text-white hover:border-destructive transition-colors" aria-label="Delete idea">
+            {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
           </Button>
         </div>
       </div>

@@ -1,17 +1,18 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { getDrafts, deleteDraft, type Draft } from "@/lib/storage"
+import { useDraftsByType, deleteDraft, type Draft } from "@/lib/hooks/use-storage"
+import type { Draft as DraftType } from "@/lib/storage"
 import { toast } from "sonner"
-import { History, Trash2, RotateCcw, FileText } from "lucide-react"
+import { History, Trash2, RotateCcw, FileText, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 
-const TYPE_COLORS: Record<Draft["type"], string> = {
+const TYPE_COLORS: Record<DraftType["type"], string> = {
   post: "bg-yellow-400 text-black border-black",
   thread: "bg-orange-400 text-black border-black",
   newsletter: "bg-amber-400 text-black border-black",
@@ -22,36 +23,35 @@ const TYPE_COLORS: Record<Draft["type"], string> = {
 }
 
 interface DraftHistoryProps {
-  currentType?: Draft["type"]
-  onRestore: (draft: Draft) => void
+  currentType?: DraftType["type"]
+  onRestore: (draft: DraftType) => void
 }
 
 export default function DraftHistory({ currentType, onRestore }: DraftHistoryProps) {
-  const [drafts, setDrafts] = useState<Draft[]>([])
+  const { drafts, isLoading } = useDraftsByType(currentType ?? "post")
   const [open, setOpen] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const loadDrafts = useCallback(() => {
-    const all = getDrafts()
-    // Filter by type if provided, otherwise show all
-    setDrafts(currentType ? all.filter((d) => d.type === currentType) : all)
-  }, [currentType])
-
-  useEffect(() => {
-    if (open) loadDrafts()
-  }, [open, loadDrafts])
-
-  const handleRestore = (draft: Draft) => {
+  const handleRestore = (draft: DraftType) => {
     onRestore(draft)
     setOpen(false)
     toast.success("Draft restored!", { description: `Loaded ${draft.type} from ${formatDistanceToNow(new Date(draft.savedAt), { addSuffix: true })}` })
   }
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    deleteDraft(id)
-    setDrafts((prev) => prev.filter((d) => d.id !== id))
-    toast.success("Draft deleted")
-  }
+    setDeletingId(id)
+    try {
+      await deleteDraft(id)
+      toast.success("Draft deleted")
+    } catch (error) {
+      toast.error("Failed to delete draft")
+    } finally {
+      setDeletingId(null)
+    }
+  }, [])
+
+  const filteredDrafts = currentType ? drafts.filter((d) => d.type === currentType) : drafts
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -63,9 +63,9 @@ export default function DraftHistory({ currentType, onRestore }: DraftHistoryPro
         >
           <History className="h-4 w-4" />
           <span className="hidden sm:inline">History</span>
-          {drafts.length > 0 && (
+          {filteredDrafts.length > 0 && (
             <span className="bg-black text-white text-xs font-black rounded-full w-4 h-4 flex items-center justify-center">
-              {drafts.length > 9 ? "9+" : drafts.length}
+              {filteredDrafts.length > 9 ? "9+" : filteredDrafts.length}
             </span>
           )}
         </Button>
@@ -82,7 +82,12 @@ export default function DraftHistory({ currentType, onRestore }: DraftHistoryPro
         </SheetHeader>
 
         <ScrollArea className="h-[calc(100vh-130px)]">
-          {drafts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="font-bold text-muted-foreground text-sm">Loading drafts...</p>
+            </div>
+          ) : filteredDrafts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
               <FileText className="h-12 w-12 opacity-20" />
               <p className="font-bold text-muted-foreground text-sm">
@@ -91,7 +96,7 @@ export default function DraftHistory({ currentType, onRestore }: DraftHistoryPro
             </div>
           ) : (
             <div className="divide-y-2 divide-black/10">
-              {drafts.map((draft, i) => (
+              {filteredDrafts.map((draft, i) => (
                 <div key={draft.id}>
                   <button
                     onClick={() => handleRestore(draft)}
@@ -111,10 +116,15 @@ export default function DraftHistory({ currentType, onRestore }: DraftHistoryPro
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={(e) => handleDelete(draft.id, e)}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-100 text-red-600 transition-all"
+                          disabled={deletingId === draft.id}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-100 text-red-600 transition-all disabled:opacity-50"
                           aria-label="Delete draft"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          {deletingId === draft.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
                         </button>
                         <RotateCcw className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
@@ -126,7 +136,7 @@ export default function DraftHistory({ currentType, onRestore }: DraftHistoryPro
                       {formatDistanceToNow(new Date(draft.savedAt), { addSuffix: true })}
                     </p>
                   </button>
-                  {i < drafts.length - 1 && <Separator className="bg-black/10" />}
+                  {i < filteredDrafts.length - 1 && <Separator className="bg-black/10" />}
                 </div>
               ))}
             </div>

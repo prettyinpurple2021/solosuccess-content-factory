@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ImageIcon, Plus, Send, Trash2, XCircle, BookOpen, Tag } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { saveDraft } from "@/lib/storage"
+import { saveDraft } from "@/lib/hooks/use-storage"
 import type { ScheduleButtonProps } from "./types"
 
 interface BlogCreatorProps {
