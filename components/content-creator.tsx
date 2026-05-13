@@ -78,7 +78,7 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
     return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current) }
   }, [body, type, selectedPlatforms])
 
-  const handleSchedule = useCallback(() => {
+  const handleSchedule = useCallback(async () => {
     if (!scheduleDate) return
     const [h, m] = scheduleTime.split(":").map(Number)
     const dt = new Date(scheduleDate)
@@ -88,10 +88,14 @@ export default function ContentCreator({ type, scheduledDate }: ContentCreatorPr
       return
     }
     const platforms = Object.entries(selectedPlatforms).filter(([, v]) => v).map(([k]) => k as PlatformKey)
-    const draft = saveDraft({ type, body, platforms })
-    scheduleItem({ draftId: draft.id, type, title: body.slice(0, 60), scheduledFor: dt.toISOString(), platforms })
-    toast.success("Scheduled!", { description: `Set for ${format(dt, "MMM d, yyyy 'at' h:mm a")}` })
-    setScheduleOpen(false)
+    try {
+      const draft = await saveDraft({ type, body, platforms })
+      await scheduleItem({ draftId: draft.id, type, title: body.slice(0, 60), scheduledFor: dt.toISOString(), platforms })
+      toast.success("Scheduled!", { description: `Set for ${format(dt, "MMM d, yyyy 'at' h:mm a")}` })
+      setScheduleOpen(false)
+    } catch (error) {
+      toast.error("Failed to schedule", { description: "Please try again." })
+    }
   }, [scheduleDate, scheduleTime, body, type, selectedPlatforms])
 
   const handlePublish = useCallback(async () => {
